@@ -1,0 +1,37 @@
+{
+  "name": "sandpiper-portal",
+  "version": "1.0.0",
+  "description": "Sandpiper Run Owners Portal",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.52.0",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "@vitejs/plugin-react": "^4.7.0",
+    "autoprefixer": "^10.4.21",
+    "framer-motion": "^12.23.6",
+    "postcss": "^8.5.6",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-hook-form": "^7.60.0",
+    "react-router-dom": "^7.7.0",
+    "tailwindcss": "^4.1.11",
+    "typescript": "^5.8.3",
+    "vite": "^7.0.5"
+  },
+  "devDependencies": {
+    "@rollup/rollup-win32-x64-msvc": "^4.45.1",
+    "@tailwindcss/postcss": "^4.1.11",
+    "lightingcss": "^0.1.0",
+    "rollup": "^4.45.1"
+  }
+}

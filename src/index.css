@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@layer base {
+  body {
+    @apply font-body text-gray-100 bg-royal-blue;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-display;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-xl;
+  }
+
+  .glass-button {
+    @apply bg-white/20 backdrop-blur-sm border border-white/30 rounded-lg px-6 py-3 hover:bg-white/30 transition-all duration-300 font-medium;
+  }
+
+  .premium-gradient {
+    @apply bg-gradient-to-br from-royal-blue via-ocean to-royal-blue;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-sand to-white bg-clip-text text-transparent;
+  }
+
+  .wave-border {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .wave-border::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 20px;
+    background: url('data:image/svg+xml,%3Csvg width="100" height="20" viewBox="0 0 100 20" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath fill="%23ffffff" fill-opacity="0.1" d="M0 10c5-5 15-5 20 0s15 5 20 0 15-5 20 0 15 5 20 0 15-5 20 0v10H0z"/%3E%3C/svg%3E');
+    background-size: 100px 20px;
+    animation: wave 3s linear infinite;
+  }
+
+  @keyframes wave {
+    0% {
+      background-position-x: 0;
+    }
+
+    100% {
+      background-position-x: 100px;
+    }
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-royal-blue/50;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-ocean rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-seafoam;
+}
