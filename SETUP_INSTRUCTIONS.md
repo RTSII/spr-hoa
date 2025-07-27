@@ -1,6 +1,11 @@
 # Sandpiper Run Portal - Setup Instructions
 
-## Prerequisites Completed ✅
+**2025-07-27 Update:**
+- All major build errors are fixed and project is ready for onboarding/admin demo.
+- Directory and Inbox are luxury-branded and privacy-first.
+- For troubleshooting, see DEV_SERVER_TROUBLESHOOTING.md.
+
+## Prerequisites Completed 
 - Created `.env` file with Supabase credentials
 - Created `database-setup.sql` with all tables and unit/account data
 - Created `database-directory-update.sql` with enhanced directory privacy controls

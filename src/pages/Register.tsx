@@ -18,6 +18,7 @@ type RegisterFormData = {
   showEmail: boolean
   showPhone: boolean
   showUnit: boolean
+  receiveAlerts: boolean
 }
 
 const Register = () => {
@@ -40,7 +41,8 @@ const Register = () => {
       directoryOptIn: false,
       showEmail: false,
       showPhone: false,
-      showUnit: true
+      showUnit: true,
+      receiveAlerts: false
     }
   })
 
@@ -153,6 +155,7 @@ const Register = () => {
         showEmail: data.showEmail,
         showPhone: data.showPhone,
         showUnit: data.showUnit,
+        receive_alerts: data.receiveAlerts
       })
 
       navigate('/dashboard')
@@ -303,6 +306,22 @@ const Register = () => {
                   />
                 </div>
 
+                {/* On-site Activity Alerts Opt-In */}
+                <div className="flex items-center justify-between glass-card p-3 animate-fadeInUp">
+                  <label className="font-medium text-white flex items-center">
+                    Receive On-site Activity Alerts
+                    <span className="ml-2 text-xs text-[var(--spr-ocean)] bg-[var(--spr-blue)]/20 px-2 py-1 rounded-full cursor-help" title="Opt in to receive important alerts about power outages, water shut-offs, and other on-site activities via email and/or SMS.">?</span>
+                  </label>
+                  <label className="relative inline-flex items-center cursor-pointer touch-area">
+                    <input
+                      type="checkbox"
+                      {...register('receiveAlerts')}
+                      className="sr-only peer"
+                    />
+                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[var(--spr-blue)] rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--spr-blue)]"></div>
+                  </label>
+                </div>
+
                 <div className="relative">
                   <label className="block text-sm font-medium text-white mb-2">
                     Password
@@ -412,6 +431,10 @@ const Register = () => {
                         <label className="ml-2 block text-sm text-white/80">
                           Show my phone number
                         </label>
+                      </div>
+
+                      <div className="info-text mb-4 text-blue-900 text-center text-sm">
+                        <strong>Note:</strong> You can upload a profile photo now or later from your profile settings. Uploading a photo is optional and not required to complete registration.
                       </div>
 
                       <p className="text-xs text-white/60 italic">

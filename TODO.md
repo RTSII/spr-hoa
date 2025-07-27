@@ -13,7 +13,13 @@ Building a premium web portal for Sandpiper Run owners with authentication, mult
 
 ## Development Tasks
 
-### Phase 1: Project Setup & Foundation ✅
+### Brainstorming & Board Demo Prep
+- [ ] Prepare demo script and walkthrough for HOA Board
+- [ ] Identify key features to showcase (admin dashboard, onboarding, owner directory, etc.)
+- [ ] List potential future features for Board feedback
+- [ ] Collect feedback from Board and users for next iteration
+
+### Phase 1: Project Setup & Foundation 
 - [x] Create project structure
 - [x] Create TODO.md for tracking progress
 - [x] Initialize React app with TypeScript
@@ -21,12 +27,15 @@ Building a premium web portal for Sandpiper Run owners with authentication, mult
 - [x] Configure Supabase client
 - [x] Set up React Router
 - [x] Create base component structure
+- [x] Unified SQL setup for database/schema (see `spr_hoa_unified_setup.sql`)
+- [x] Solo admin setup (see README/Supabase guide)
 - [ ] Store SPR logo in appropriate location (User needs to copy spr_logo.jpg to sandpiper-portal/src/assets/images/)
 
-### Phase 2: Authentication System ✅
-- [ ] Create Supabase tables:
-  - [ ] `owners_master` table (unit_number, hoa_account_number, is_verified)
-  - [ ] `owner_profiles` table (extended user info, directory opt-in)
+### Phase 2: Authentication System 
+- [x] Create Supabase tables:
+  - [x] `owners_master` table (unit_number, hoa_account_number)
+  - [x] `owner_profiles` table (extended user info, directory opt-in)
+  - [x] `admin_users` table (solo admin model)
 - [x] Build authentication flow:
   - [x] Unit & HOA Account verification page
   - [x] Username/password creation form
@@ -34,8 +43,9 @@ Building a premium web portal for Sandpiper Run owners with authentication, mult
   - [x] Protected route wrapper
 - [x] Implement session management
 - [ ] Add "Remember Me" functionality
+- [x] Onboarding validation with Supabase function
 
-### Phase 3: Main Dashboard & Navigation ✅
+### Phase 3: Main Dashboard & Navigation 
 - [x] Create main layout component with navigation
 - [x] Design and implement navigation menu/sidebar
 - [x] Build dashboard home page

@@ -1,16 +1,40 @@
-# Supabase Database Setup Guide
+# Supabase Setup Guide
+
+**2025-07-27 Update:**
+- All code is verified to build and run cleanly with Supabase backend.
+- Directory and Inbox features are fully functional and privacy-first.
+- See README for recent changes.
+- For troubleshooting, see DEV_SERVER_TROUBLESHOOTING.md.
 
 ## Step 1: Access Your Supabase Dashboard
 1. Go to: https://supabase.com/dashboard/project/ukortnwfrzxlslbhlmro
 2. Sign in with your credentials
 
-## Step 2: Run the Database Setup Script
+## Step 2: Run the Unified Database Setup Script
 1. In the left sidebar, click on **SQL Editor**
 2. Click on **New query** (+ button)
-3. Copy the ENTIRE contents of `complete-database-setup.sql`
+3. Copy the ENTIRE contents of `spr_hoa_unified_setup.sql`
 4. Paste it into the SQL editor
 5. Click **Run** (or press Ctrl+Enter)
 6. You should see "Success. No rows returned" - this is normal!
+
+### Admin Setup
+After registering with your admin email, get your user UUID:
+```sql
+SELECT id, email FROM auth.users WHERE email = 'rtsii10@gmail.com';
+```
+Then insert yourself as admin:
+```sql
+INSERT INTO admin_users (user_id, email, role) VALUES ('YOUR-USER-UUID', 'rtsii10@gmail.com', 'admin')
+ON CONFLICT (user_id) DO UPDATE SET role = 'admin', email = 'rtsii10@gmail.com';
+```
+
+### Onboarding Validation
+- Owners register with their unit number and last 4 digits of their HOA account number.
+- Registration is validated by the `validate_owner_onboarding` function, which checks for correct unit/account mapping and ensures account numbers start with '7'.
+
+### Clean Project Practice
+- All old SQL files have been removed; only use `spr_hoa_unified_setup.sql` for setup and migrations.
 
 ## Step 3: Verify the Setup
 1. Go to **Table Editor** in the left sidebar

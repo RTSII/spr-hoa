@@ -286,4 +286,46 @@ const Profile = () => {
   )
 }
 
-export default Profile
+import OwnerInbox, { InboxMessage } from '../components/OwnerInbox';
+
+// Placeholder messages for demonstration
+const demoMessages: InboxMessage[] = [
+  {
+    id: '1',
+    title: 'B South Elevator Out of Service',
+    body: 'The B South elevator is temporarily out of service for emergency repairs. Please use the North elevator. Estimated restoration: 4:00 PM.',
+    date: 'Jul 27, 2025',
+    type: 'emergency',
+    read: false,
+  },
+  {
+    id: '2',
+    title: 'Pool Maintenance',
+    body: 'The pool will be closed for routine maintenance on Monday from 8:00 AM to noon.',
+    date: 'Jul 26, 2025',
+    type: 'notice',
+    read: false,
+  },
+  {
+    id: '3',
+    title: 'Welcome to Sandpiper Run!',
+    body: 'Your registration is complete. Please review your profile and privacy settings.',
+    date: 'Jul 25, 2025',
+    type: 'info',
+    read: true,
+  },
+];
+
+export default function Profile() {
+  // ...existing Profile component code...
+
+  // Render profile form as before, then OwnerInbox below
+  return (
+    <>
+      {/* Existing Profile form UI */}
+      {/* ...existing form code... */}
+      <OwnerInbox messages={demoMessages} />
+      {/* TODO: Replace demoMessages with real backend data */}
+    </>
+  );
+}

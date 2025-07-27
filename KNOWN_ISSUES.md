@@ -1,4 +1,10 @@
-# Known Issues and Development Notes
+# Known Issues
+
+**2025-07-27 Update:**
+- All critical CSS/TS errors are resolved.
+- If you encounter build or runtime errors, see DEV_SERVER_TROUBLESHOOTING.md.
+- Minor warnings (e.g. unused vars) may appear but do not block build.
+ and Development Notes
 
 ## LightningCSS Native Module Issue on Windows
 

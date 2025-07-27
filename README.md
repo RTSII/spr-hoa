@@ -4,6 +4,14 @@ A premium web portal exclusively for owners at Sandpiper Run, a luxury oceanfron
 
 ## Features
 
+**2025-07-27 Update:**
+- All major CSS and TypeScript errors have been fixed (OwnerInbox.tsx, Directory.tsx, index.css)
+- The build now completes successfully
+- Directory and Inbox are fully functional and luxury-branded
+- The project uses a solo admin model for maximum control and privacy-first resident directory controls
+- See DEV_SERVER_TROUBLESHOOTING.md for troubleshooting
+
+
 - **Secure Authentication**: Unit number and HOA account verification system
 - **Dashboard**: Personalized home page with quick access to all features
 - **Calendar**: Interactive community calendar with events and activities
@@ -53,10 +61,34 @@ A premium web portal exclusively for owners at Sandpiper Run, a luxury oceanfron
    VITE_SUPABASE_URL=your_supabase_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
    VITE_SUPERMEMORY_URL=https://mcp.supermemory.ai/guyugQ3xRxBWjmW7izcQx/sse
-   VITE_SUPERMEMORY_API_KEY=sm_mTx77GLefaYFCKTRmJcKRh_JRTcGtPbVPmfcDrNmTBSmXKYuBbQGajHxxIfWQvWfiTGIUPBsWBZdQRZMugYPyPC
+   VITE_SUPERMEMORY_API_KEY=your_supermemory_api_key
    ```
 
-6. Set up Supabase tables (see Database Schema section)
+6. **Database Setup:**
+   - Use the unified setup script: `spr_hoa_unified_setup.sql` (see Supabase Setup Guide)
+   - This script creates all tables, onboarding logic, and a solo admin model.
+   - After registering your admin email (`rtsii10@gmail.com`), insert yourself as admin (see below).
+
+### Solo Admin Setup
+
+- Register with your admin email in the app or Supabase Auth UI.
+- Get your user UUID:
+  ```sql
+  SELECT id, email FROM auth.users WHERE email = 'rtsii10@gmail.com';
+  ```
+- Insert yourself as admin:
+  ```sql
+  INSERT INTO admin_users (user_id, email, role) VALUES ('YOUR-USER-UUID', 'rtsii10@gmail.com', 'admin')
+  ON CONFLICT (user_id) DO UPDATE SET role = 'admin', email = 'rtsii10@gmail.com';
+  ```
+
+### Onboarding Flow
+- Owners register with their unit number and last 4 digits of their HOA account number (must match `owners_master` table and account must start with '7').
+- The onboarding validation is performed by the `validate_owner_onboarding` Supabase function.
+
+### Project Cleanliness
+- All old SQL setup files have been removed for clarity and maintainability.
+- Use only `spr_hoa_unified_setup.sql` for future database setup or migrations.
 
 7. Run the development server:
    ```bash

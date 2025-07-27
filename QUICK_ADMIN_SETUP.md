@@ -1,4 +1,11 @@
-# Quick Admin Setup Guide
+# Quick Admin Setup
+
+**2025-07-27 Update:**
+- All major errors are fixed and project builds successfully.
+- Directory and Inbox are luxury-branded and fully functional.
+- See README for details.
+- For troubleshooting, see DEV_SERVER_TROUBLESHOOTING.md.
+ Guide
 
 ## Step 1: Run the Admin SQL Script
 

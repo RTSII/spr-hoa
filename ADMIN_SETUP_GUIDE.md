@@ -1,5 +1,11 @@
 # Admin Review/Approval System Setup Guide
 
+**2025-07-27 Update:**
+- All CSS/TS errors are fixed and build is clean.
+- Directory and Inbox are fully functional and privacy-first.
+- See README for status.
+- For troubleshooting, see DEV_SERVER_TROUBLESHOOTING.md.
+
 ## Overview
 This system adds admin review and approval for:
 - Profile pictures uploaded by users
