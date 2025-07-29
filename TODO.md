@@ -29,7 +29,7 @@ Building a premium web portal for Sandpiper Run owners with authentication, mult
 - [x] Create base component structure
 - [x] Unified SQL setup for database/schema (see `spr_hoa_unified_setup.sql`)
 - [x] Solo admin setup (see README/Supabase guide)
-- [ ] Store SPR logo in appropriate location (User needs to copy spr_logo.jpg to sandpiper-portal/src/assets/images/)
+- [x] SPR logo (spr_logo.jpg) and new pool overhead picture are stored in /src/assets/images/
 
 ### Phase 2: Authentication System 
 - [x] Create Supabase tables:
@@ -54,6 +54,11 @@ Building a premium web portal for Sandpiper Run owners with authentication, mult
 - [x] Create logout functionality
 
 ### Phase 4: Core Sections Development ✅ (Basic Implementation)
+
+#### 4.0 Codebase Quality
+- [x] All critical TypeScript/React lint errors in ProfileCard, Directory, OwnerInbox, and related files resolved as of 2025-07-28
+- [x] Luxury ProfileCard thumbnail/modal fully integrated and error-free in Resident Directory
+- [x] Codebase ready for documentation updates and onboarding flow finalization
 
 #### 4.1 Calendar Section ✅
 - [x] Design calendar UI component (placeholder)

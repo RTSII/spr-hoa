@@ -15,6 +15,8 @@ type ProfileFormData = {
   showUnit: boolean
 }
 
+import OwnerInbox from '../components/OwnerInbox';
+
 const Profile = () => {
   const { profile, updateProfile } = useAuth()
   const navigate = useNavigate()
@@ -88,13 +90,21 @@ const Profile = () => {
   }
 
   return (
-    <div className="space-y-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass-card p-8"
-      >
-        <div className="flex justify-between items-center mb-6">
+    <>
+      <div className="space-y-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card p-8"
+        >
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-3xl font-display font-bold text-white">Profile Settings</h1>
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="text-white/70 hover:text-white"
+            >
+              ← Back to Dashboard
+            </button>
           <h1 className="text-3xl font-display font-bold text-white">Profile Settings</h1>
           <button
             onClick={() => navigate('/dashboard')}
@@ -143,32 +153,56 @@ const Profile = () => {
               <label className="block text-sm font-medium text-white mb-2">
                 Email
               </label>
-              <input
-                {...register('email', {
-                  required: 'Email is required',
-                  pattern: {
-                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: 'Invalid email address'
-                  }
-                })}
-                type="email"
-                className="glass-input"
-              />
-              {errors.email && (
-                <p className="mt-1 text-sm text-red-400">{errors.email.message}</p>
-              )}
+              <div className="relative">
+                <input
+                  {...register('email', {
+                    required: 'Email is required',
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: 'Invalid email address'
+                    }
+                  })}
+                  type="email"
+                  className={`glass-input pr-10 ${!errors.email && watch('email') ? 'border-green-400' : ''}`}
+                />
+                {/* Green checkmark for valid input */}
+                {!errors.email && watch('email') && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-400" title="Valid email">
+                    ✓
+                  </span>
+                )}
+                {errors.email && (
+                  <p className="mt-1 text-sm text-red-400">{errors.email.message}</p>
+                )}
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-white mb-2">
                 Phone
               </label>
-              <input
-                {...register('phone')}
-                type="tel"
-                className="glass-input"
-                placeholder="(XXX) XXX-XXXX"
-              />
+              <div className="relative">
+                <input
+                  {...register('phone', {
+                    pattern: {
+                      value: /^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$/,
+                      message: 'Phone number must be 10 digits (e.g., (555) 555-5555)'
+                    }
+                  })}
+                  type="tel"
+                  className={`glass-input pr-10 ${!errors.phone && watch('phone') ? 'border-green-400' : ''}`}
+                  placeholder="(XXX) XXX-XXXX"
+                />
+                {/* Green checkmark for valid input */}
+                {!errors.phone && watch('phone') && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-400" title="Valid phone">
+                    ✓
+                  </span>
+                )}
+                {errors.phone && (
+                  <p className="mt-1 text-sm text-red-400">{errors.phone.message}</p>
+                )}
+              </div>
             </div>
 
             <div className="bg-white/10 rounded-lg p-4">
@@ -183,7 +217,8 @@ const Profile = () => {
 
           {/* Directory Settings */}
           <div className="space-y-4 p-6 bg-white/10 rounded-lg">
-            <h2 className="text-xl font-semibold text-white">Resident Directory Settings</h2>
+            <h2 className="text-xl font-semibold text-white mb-2">Choose How You Appear in the Community Directory</h2>
+<p className="text-white/80 mb-4">You control what information is visible to other residents. Toggle each option below to decide what appears in the Directory. <span className="font-semibold">All options are off by default.</span></p>
 
             <div className="flex items-center">
               <input
@@ -211,8 +246,14 @@ const Profile = () => {
                     type="checkbox"
                     className="h-4 w-4 text-seafoam focus:ring-seafoam border-white/30 rounded bg-white/10"
                   />
-                  <label className="ml-2 block text-sm text-white/80">
+                  <label className="ml-2 block text-sm text-white/80 flex items-center">
                     Show my unit number
+                    <span className="ml-1 cursor-pointer relative group">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-seafoam" fill="none" viewBox="0 0 24 24" stroke="currentColor"><title>Help</title><circle cx="12" cy="12" r="12" fill="#2953A6"/><text x="12" y="16" textAnchor="middle" fontSize="12" fill="#fff">?</text></svg>
+                      <span className="absolute left-1/2 z-10 -translate-x-1/2 mt-2 w-56 rounded-lg bg-[#2953A6] text-white text-xs px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        If enabled, your unit number will be visible to other opted-in residents in the Directory.
+                      </span>
+                    </span>
                   </label>
                 </div>
 
@@ -222,8 +263,14 @@ const Profile = () => {
                     type="checkbox"
                     className="h-4 w-4 text-seafoam focus:ring-seafoam border-white/30 rounded bg-white/10"
                   />
-                  <label className="ml-2 block text-sm text-white/80">
+                  <label className="ml-2 block text-sm text-white/80 flex items-center">
                     Show my email address
+                    <span className="ml-1 cursor-pointer relative group">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-seafoam" fill="none" viewBox="0 0 24 24" stroke="currentColor"><title>Help</title><circle cx="12" cy="12" r="12" fill="#2953A6"/><text x="12" y="16" textAnchor="middle" fontSize="12" fill="#fff">?</text></svg>
+                      <span className="absolute left-1/2 z-10 -translate-x-1/2 mt-2 w-56 rounded-lg bg-[#2953A6] text-white text-xs px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        If enabled, your email address will be visible to other opted-in residents in the Directory.
+                      </span>
+                    </span>
                   </label>
                 </div>
 
@@ -233,8 +280,14 @@ const Profile = () => {
                     type="checkbox"
                     className="h-4 w-4 text-seafoam focus:ring-seafoam border-white/30 rounded bg-white/10"
                   />
-                  <label className="ml-2 block text-sm text-white/80">
+                  <label className="ml-2 block text-sm text-white/80 flex items-center">
                     Show my phone number
+                    <span className="ml-1 cursor-pointer relative group">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-seafoam" fill="none" viewBox="0 0 24 24" stroke="currentColor"><title>Help</title><circle cx="12" cy="12" r="12" fill="#2953A6"/><text x="12" y="16" textAnchor="middle" fontSize="12" fill="#fff">?</text></svg>
+                      <span className="absolute left-1/2 z-10 -translate-x-1/2 mt-2 w-56 rounded-lg bg-[#2953A6] text-white text-xs px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                        If enabled, your phone number will be visible to other opted-in residents in the Directory.
+                      </span>
+                    </span>
                   </label>
                 </div>
               </motion.div>
@@ -283,49 +336,9 @@ const Profile = () => {
         </form>
       </motion.div>
     </div>
-  )
-}
-
-import OwnerInbox, { InboxMessage } from '../components/OwnerInbox';
-
-// Placeholder messages for demonstration
-const demoMessages: InboxMessage[] = [
-  {
-    id: '1',
-    title: 'B South Elevator Out of Service',
-    body: 'The B South elevator is temporarily out of service for emergency repairs. Please use the North elevator. Estimated restoration: 4:00 PM.',
-    date: 'Jul 27, 2025',
-    type: 'emergency',
-    read: false,
-  },
-  {
-    id: '2',
-    title: 'Pool Maintenance',
-    body: 'The pool will be closed for routine maintenance on Monday from 8:00 AM to noon.',
-    date: 'Jul 26, 2025',
-    type: 'notice',
-    read: false,
-  },
-  {
-    id: '3',
-    title: 'Welcome to Sandpiper Run!',
-    body: 'Your registration is complete. Please review your profile and privacy settings.',
-    date: 'Jul 25, 2025',
-    type: 'info',
-    read: true,
-  },
-];
-
-export default function Profile() {
-  // ...existing Profile component code...
-
-  // Render profile form as before, then OwnerInbox below
-  return (
-    <>
-      {/* Existing Profile form UI */}
-      {/* ...existing form code... */}
-      <OwnerInbox messages={demoMessages} />
-      {/* TODO: Replace demoMessages with real backend data */}
+    {profile?.user_id && <OwnerInbox user_id={profile.user_id} />}
     </>
   );
 }
+
+export default Profile;

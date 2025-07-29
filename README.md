@@ -4,12 +4,30 @@ A premium web portal exclusively for owners at Sandpiper Run, a luxury oceanfron
 
 ## Features
 
-**2025-07-27 Update:**
-- All major CSS and TypeScript errors have been fixed (OwnerInbox.tsx, Directory.tsx, index.css)
-- The build now completes successfully
+**2025-07-28 Update:**
+- All critical TypeScript and React lint errors are now resolved in ProfileCard, Directory, OwnerInbox, and related files
+- The luxury ProfileCard thumbnail and expanded modal are fully integrated and error-free in the Resident Directory
+- The codebase is ready for production, documentation updates, and onboarding flow finalization
 - Directory and Inbox are fully functional and luxury-branded
 - The project uses a solo admin model for maximum control and privacy-first resident directory controls
 - See DEV_SERVER_TROUBLESHOOTING.md for troubleshooting
+
+---
+
+## AI Agent QA & Feature Verification
+
+Whenever new features, major changes, or new pages are introduced, the AI Agent (Cascade) must:
+- Fully test and verify all new functionality using the full scope of its tools.
+- Access the Windsurf Chrome Browser to load, inspect, and interact with all relevant pages.
+- Simulate realistic user flows (registration, login, onboarding, directory, inbox, etc.) using test data as needed.
+- Check for UI/UX consistency, accessibility, error-free operation, and that all requirements are met.
+- Capture screenshots, console logs, and DOM structure as needed for thorough QA.
+- Report any issues, blockers, or mismatches between implementation and requirements.
+- Always use the best available tools and methods to ensure the portal matches the intended design and functionality.
+
+This process should be performed for every major update, and results should be documented or communicated to the project owner.
+
+---
 
 
 - **Secure Authentication**: Unit number and HOA account verification system

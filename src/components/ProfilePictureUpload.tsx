@@ -116,6 +116,10 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
 
   return (
     <div className="space-y-4">
+      <div className="bg-[#2953A6]/10 border border-[#2953A6]/40 rounded-lg p-4 mb-2 flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-[#2953A6] flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="12" fill="#2953A6"/><text x="12" y="16" textAnchor="middle" fontSize="12" fill="#fff">i</text></svg>
+        <span className="text-[#2953A6] font-medium">Your photo will be visible to other residents after it has been approved by the administrator.</span>
+      </div>
       <div className="flex items-center space-x-4">
         <div className="relative">
           <img

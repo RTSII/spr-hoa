@@ -87,7 +87,10 @@ const PhotoGalleryUpload: React.FC<PhotoGalleryUploadProps> = ({ onUploadComplet
 
     if (data && data.length > 0) {
       const latest = data[0];
-      setUploadStatus(latest.status as any);
+      const allowedStatuses = ['idle', 'uploading', 'pending', 'approved', 'rejected'] as const;
+      if (allowedStatuses.includes(latest.status)) {
+        setUploadStatus(latest.status as typeof allowedStatuses[number]);
+      }
       setRejectionReason(latest.rejection_reason || '');
     }
   };

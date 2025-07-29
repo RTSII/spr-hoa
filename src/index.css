@@ -20,7 +20,6 @@
   h6 {
     font-family: 'Playfair Display', serif;
   }
-}
 
 :root {
   --spr-blue: #2953A1;
@@ -122,10 +121,13 @@
   animation: glassPop 0.5s cubic-bezier(.22,1,.36,1) both;
 }
 
+}
+
+:root {
   --spr-ocean: #6bb7e3;
   --spr-dark: #101624;
   --spr-white: #f8fafc;
-}
+
 
 .dark {
   --tw-bg-opacity: 1;
@@ -194,4 +196,5 @@
 
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-seafoam;
+}
 }

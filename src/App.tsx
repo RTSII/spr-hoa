@@ -4,6 +4,7 @@ import ProtectedRoute from '@/components/ProtectedRoute'
 import Layout from '@/components/Layout'
 import Login from '@/pages/Login'
 import Register from '@/pages/Register'
+import DevPortal from '@/pages/DevPortal'
 import Dashboard from '@/pages/Dashboard'
 import Calendar from '@/pages/Calendar'
 import CommunityFeed from '@/pages/CommunityFeed'
@@ -20,6 +21,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/dev-portal" element={<DevPortal />} />
           <Route element={<ProtectedRoute />}>
             <Route element={<Layout />}>
               <Route index element={<Navigate to="/dashboard" replace />} />

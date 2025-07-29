@@ -2,25 +2,37 @@ import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+import ProfileCard from '@/components/ProfileCard';
+import '@/components/ProfileCard.css';
+
 
 type DirectoryEntry = {
-  id: string
-  unit_number: string
-  first_name: string
-  last_name: string
-  email: string
-  phone: string | null
-  show_email: boolean
-  show_phone: boolean
-  show_unit: boolean
-}
+  id: string;
+  unit_number: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+};
 
 const Directory = () => {
   const { profile } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
+  const [buildingFilter, setBuildingFilter] = useState('');
+  const [supermemoryQuery, setSupermemoryQuery] = useState('');
+  const [supermemoryResults, setSupermemoryResults] = useState<any[]>([]);
   const [residents, setResidents] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [accessDenied, setAccessDenied] = useState(false);
+  const [expandedResident, setExpandedResident] = useState<any | null>(null);
+
+  // Helper to get preferred contact method
+  const getPreferredContact = (resident: any) => {
+    if (resident.show_email && resident.email) return resident.email;
+    if (resident.show_phone && resident.phone) return resident.phone;
+    return '';
+  };
 
   useEffect(() => {
     if (profile && !profile.directory_opt_in) {
@@ -45,13 +57,15 @@ const Directory = () => {
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   const filteredResidents = residents.filter((resident) => {
     const searchLower = searchTerm.toLowerCase();
     const fullName = `${resident.first_name} ${resident.last_name}`.toLowerCase();
     const unit = resident.unit_number.toLowerCase();
-    return fullName.includes(searchLower) || unit.includes(searchLower);
+    const building = resident.unit_number.charAt(0).toUpperCase();
+    const buildingMatch = buildingFilter ? building === buildingFilter : true;
+    return buildingMatch && (fullName.includes(searchLower) || unit.includes(searchLower));
   });
 
   // Helper: get resident photo or shadow image
@@ -66,30 +80,25 @@ const Directory = () => {
     return require('@/assets/images/shadow_profile.png'); // fallback shadow image
   };
 
-  const exportDirectory = () => {
-    // Create CSV content
-    let csvContent = 'Name,Unit,Email,Phone\n'
-
-    filteredResidents.forEach(resident => {
-      const name = `${resident.first_name} ${resident.last_name}`
-      const unit = resident.show_unit ? resident.unit_number : 'Private'
-      const email = resident.show_email ? resident.email : 'Private'
-      const phone = resident.show_phone ? (resident.phone || 'Not provided') : 'Private'
-
-      csvContent += `"${name}","${unit}","${email}","${phone}"\n`
-    })
-
-    // Create and download file
-    const blob = new Blob([csvContent], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = `sandpiper-run-directory-${new Date().toISOString().split('T')[0]}.csv`
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    window.URL.revokeObjectURL(url)
-  }
+  const exportDirectoryPDF = async () => {
+    const element = document.getElementById('directory-list-pdf');
+    if (!element) return;
+    const canvas = await html2canvas(element, { backgroundColor: null, scale: 2 });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    const imgProps = pdf.getImageProperties(imgData);
+    const pdfWidth = pageWidth - 40;
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    pdf.setFillColor('#2953A6');
+    pdf.rect(0, 0, pageWidth, 60, 'F');
+    pdf.setTextColor('#fff');
+    pdf.setFontSize(22);
+    pdf.text('Sandpiper Run Resident Directory', 40, 40);
+    pdf.addImage(imgData, 'PNG', 20, 70, pdfWidth, pdfHeight);
+    pdf.save(`sandpiper-run-directory-${new Date().toISOString().split('T')[0]}.pdf`);
+  };
 
   return (
     <div className="space-y-8">
@@ -102,12 +111,19 @@ const Directory = () => {
           <h1 className="text-3xl font-display font-bold text-white mb-4 md:mb-0">
             Resident Directory
           </h1>
+          <a
+            href="/profile"
+            className="glass-button ml-0 md:ml-4 mt-4 md:mt-0 text-base font-semibold px-6 py-2 rounded-lg shadow-lg bg-gradient-to-r from-[#2953A6] to-[#6bb7e3] text-white hover:from-[#1e3a6b] hover:to-[#4a90e2] focus:outline-none focus:ring-2 focus:ring-seafoam transition-all duration-200"
+            aria-label="Manage My Directory Profile"
+          >
+            Manage My Directory Profile
+          </a>
           <button
-            onClick={exportDirectory}
+            onClick={exportDirectoryPDF}
             className="glass-button text-sm"
             disabled={filteredResidents.length === 0}
           >
-            📥 Export Directory (CSV)
+            🖨️ Export Directory (PDF)
           </button>
         </div>
 
@@ -127,15 +143,72 @@ const Directory = () => {
           </motion.div>
         )}
 
-        {/* Search Bar */}
-        <div className="mb-6">
+        {/* Building Filter & Search Bar */}
+        <div className="mb-6 flex flex-col md:flex-row gap-4">
+          <select
+            value={buildingFilter}
+            onChange={(e) => setBuildingFilter(e.target.value)}
+            className="w-full md:w-48 px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-seafoam focus:border-transparent transition-all duration-200"
+            aria-label="Filter by building"
+          >
+            <option value="">All Buildings</option>
+            <option value="A">Building A</option>
+            <option value="B">Building B</option>
+            <option value="C">Building C</option>
+            <option value="D">Building D</option>
+          </select>
           <input
             type="text"
             placeholder="Search by name or unit number..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-seafoam focus:border-transparent transition-all duration-200"
+            className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-seafoam focus:border-transparent transition-all duration-200"
           />
+        </div>
+
+        {/* Supermemory AI Search Bar */}
+        <div className="mb-6">
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!supermemoryQuery) return;
+              const { supermemorySearch } = await import('../lib/supermemoryClient');
+              try {
+                const result = await supermemorySearch(supermemoryQuery, 'resident-directory');
+                setSupermemoryResults(result?.results || []);
+              } catch (err) {
+                setSupermemoryResults([]);
+              }
+            }}
+            className="flex gap-2"
+            role="search"
+            aria-label="AI-powered resident search"
+          >
+            <input
+              type="text"
+              placeholder="AI-powered search (e.g. 'owners with pets', 'find all B units')"
+              value={supermemoryQuery}
+              onChange={(e) => setSupermemoryQuery(e.target.value)}
+              className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-seafoam focus:border-transparent transition-all duration-200"
+            />
+            <button
+              type="submit"
+              className="glass-button text-sm"
+              disabled={!supermemoryQuery}
+            >
+              🔍 AI Search
+            </button>
+          </form>
+          {supermemoryResults.length > 0 && (
+            <div className="mt-2 text-white/80">
+              <div className="font-bold mb-1">AI Search Results:</div>
+              <ul className="list-disc ml-6">
+                {supermemoryResults.map((res, i) => (
+                  <li key={i}>{typeof res === 'string' ? res : JSON.stringify(res)}</li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         {/* Directory Stats */}
@@ -166,40 +239,58 @@ const Directory = () => {
                 style={{ boxShadow: '0 4px 32px 0 rgba(41,83,166,0.12)' }}
               >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                  {/* Resident Photo */}
-                  <div className="flex-shrink-0">
-                    <img
-                      src={getResidentPhoto(resident)}
-                      alt="Resident profile"
-                      className="w-20 h-20 rounded-full border-4 border-white shadow-md object-cover bg-[#e6eaf3]"
-                      title={resident.show_profile_photo ? (resident.profile_picture_status === 'approved' ? 'Profile photo approved' : 'Photo pending approval') : 'No photo shared'}
+                  {/* Resident Thumbnail (ProfileCard) */}
+                  <div className="flex-shrink-0 cursor-pointer" onClick={() => setExpandedResident(resident)}>
+                    <ProfileCard
+                      avatarUrl={getResidentPhoto(resident)}
+                      name={`${resident.first_name} ${resident.last_name}`}
+                      handle={resident.unit_number}
+                      status={getPreferredContact(resident)}
+                      showUserInfo={false}
+                      className="w-20 h-20"
+                      behindGradient={undefined}
+                      innerGradient={undefined}
+                      miniAvatarUrl={undefined}
+                      onContactClick={undefined}
                     />
                   </div>
                   {/* Resident Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h3 className="text-2xl font-bold text-white tracking-wide">
+                      <span className="text-lg font-semibold text-white">
                         {resident.first_name} {resident.last_name}
-                      </h3>
+                      </span>
+                      {/* Only show unit if opted-in */}
                       {resident.show_unit && (
-                        <span className="ml-2 px-3 py-1 rounded-full bg-[#2953A6] text-white text-xs font-semibold" title="Unit number shown">Unit {resident.unit_number}</span>
+                        <span className="text-seafoam text-xs font-bold bg-white/10 px-2 py-1 rounded ml-2">
+                          Unit {resident.unit_number}
+                        </span>
                       )}
                     </div>
-                    <div className="flex flex-wrap gap-3 mt-2">
+                    <div className="mt-2 flex flex-col gap-1">
+                      {/* Only show email if opted-in */}
                       {resident.show_email && (
-                        <span className="flex items-center gap-1 text-white/90 text-sm" title="Email shared">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12l-4-4-4 4m8 0l-4 4-4-4" /></svg>
-                          <a href={`mailto:${resident.email}`} className="underline hover:text-[#6bb7e3]">{resident.email}</a>
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-white/80 text-sm">
+                            {resident.email}
+                          </span>
+                        </div>
                       )}
+                      {/* Only show phone if opted-in and present */}
                       {resident.show_phone && resident.phone && (
-                        <span className="flex items-center gap-1 text-white/90 text-sm" title="Phone shared">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h2l.4 2M7 13v6a2 2 0 002 2h6a2 2 0 002-2v-6M16 7a4 4 0 01-8 0" /></svg>
-                          <a href={`tel:${resident.phone}`} className="underline hover:text-[#6bb7e3]">{resident.phone}</a>
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-white/80 text-sm">
+                            {resident.phone}
+                          </span>
+                          <a href={`tel:${resident.phone}`} className="underline hover:text-[#6bb7e3]">
+                            {resident.phone}
+                          </a>
+                        </div>
                       )}
                       {!resident.show_email && !resident.show_phone && (
-                        <span className="text-white/60 italic" title="Contact info private">Contact info private</span>
+                        <span className="text-white/60 italic" title="Contact info private">
+                          Contact info private
+                        </span>
                       )}
                     </div>
                   </div>
@@ -207,12 +298,16 @@ const Directory = () => {
                   <div className="flex flex-col items-end gap-2">
                     {resident.show_profile_photo && resident.profile_picture_status === 'approved' ? (
                       <span className="inline-flex items-center gap-1 text-[#6bb7e3] text-xs" title="Photo approved and shown">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
                         Photo Shared
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-white/50 text-xs" title="No photo shared or pending approval">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
                         No Photo
                       </span>
                     )}
@@ -230,8 +325,48 @@ const Directory = () => {
           </p>
         </div>
       </motion.div>
+      {/* Expanded Resident Modal */}
+      {expandedResident && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={() => setExpandedResident(null)}>
+          <div className="bg-[#101a2b] rounded-2xl shadow-2xl p-8 max-w-xs w-full relative" onClick={e => e.stopPropagation()}>
+            <button
+              className="absolute top-3 right-3 text-white/70 hover:text-white text-xl font-bold focus:outline-none"
+              onClick={() => setExpandedResident(null)}
+              aria-label="Close profile card"
+            >
+              &times;
+            </button>
+            <ProfileCard
+              avatarUrl={getResidentPhoto(expandedResident)}
+              name={`${expandedResident.first_name} ${expandedResident.last_name}`}
+              handle={expandedResident.unit_number}
+              status={getPreferredContact(expandedResident)}
+              showUserInfo={true}
+              className="w-44 h-44 mx-auto"
+              behindGradient={undefined}
+              innerGradient={undefined}
+              miniAvatarUrl={undefined}
+              onContactClick={undefined}
+            />
+            <div className="mt-6 text-center">
+              <div className="text-lg font-semibold text-white">{expandedResident.first_name} {expandedResident.last_name}</div>
+              {getPreferredContact(expandedResident) ? (
+                <div className="mt-2 text-seafoam text-base font-medium">
+                  {expandedResident.show_email && expandedResident.email ? (
+                    <a href={`mailto:${expandedResident.email}`}>{expandedResident.email}</a>
+                  ) : expandedResident.show_phone && expandedResident.phone ? (
+                    <a href={`tel:${expandedResident.phone}`}>{expandedResident.phone}</a>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="mt-2 text-white/60 italic text-base">No public contact info</div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  )
-}
+  );
+};
 
-export default Directory
+export default Directory;

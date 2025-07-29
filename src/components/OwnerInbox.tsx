@@ -23,6 +23,7 @@ const OwnerInbox: React.FC<{ user_id: string }> = ({ user_id }) => {
   const [messages, setMessages] = useState<InboxMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [markingRead, setMarkingRead] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchMessages() {
@@ -50,8 +51,17 @@ const OwnerInbox: React.FC<{ user_id: string }> = ({ user_id }) => {
             return 0;
           })
         );
-      } catch (err: any) {
-        setError(err.message || 'Failed to load messages');
+        // Optionally, mark all as read when inbox is opened
+        const unreadIds = data.filter((msg: InboxMessage) => !msg.read).map((msg: InboxMessage) => msg.id);
+        if (unreadIds.length > 0) {
+          markMessagesRead(unreadIds);
+        }
+      } catch (err: unknown) {
+        if (err && typeof err === 'object' && 'message' in err && typeof (err as any).message === 'string') {
+          setError((err as any).message);
+        } else {
+          setError('Failed to load messages');
+        }
       } finally {
         setLoading(false);
       }
@@ -59,13 +69,28 @@ const OwnerInbox: React.FC<{ user_id: string }> = ({ user_id }) => {
     fetchMessages();
   }, [user_id]);
 
+  // Mark messages as read in Supabase
+  const markMessagesRead = async (ids: string[]) => {
+    setMarkingRead(ids[0] || null);
+    try {
+      await supabase.from('owner_messages').update({ read: true }).in('id', ids);
+      setMessages(prev => prev.map(msg => ids.includes(msg.id) ? { ...msg, read: true } : msg));
+    } catch (err) {
+      // Silently fail for now
+    } finally {
+      setMarkingRead(null);
+    }
+  };
+
   return (
-    <div className="glass-card p-6 max-w-2xl mx-auto mt-10 animate-fadeInUp">
-      <h2 className="text-2xl font-bold mb-6 text-white flex items-center gap-2">
-        Inbox
-        <span className="ml-2 bg-[var(--spr-blue)]/20 text-[var(--spr-blue)] px-3 py-1 rounded-full text-xs font-semibold">
-          {messages.filter(m => !m.read).length} New
-        </span>
+    <div className="glass-card p-8 space-y-6">
+      <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+        Owner Inbox
+        {messages.some(m => !m.read) && (
+          <span className="ml-2 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-full animate-pulse" aria-label="Unread messages">
+            {messages.filter(m => !m.read).length} unread
+          </span>
+        )}
       </h2>
       {loading ? (
         <div className="text-white/70 text-center">Loading...</div>
@@ -81,11 +106,17 @@ const OwnerInbox: React.FC<{ user_id: string }> = ({ user_id }) => {
               key={msg.id}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className={`flex items-start p-4 rounded-lg shadow-lg transition-all border-l-4 ${
+              tabIndex={0}
+              role="article"
+              aria-label={msg.type === 'emergency' ? `Emergency: ${msg.title}` : msg.title}
+              className={`flex items-start p-4 rounded-lg shadow-lg transition-all border-l-4 outline-none group focus:ring-2 focus:ring-[var(--spr-blue)] focus:ring-offset-2 focus:ring-offset-black ${
                 msg.type === 'emergency'
                   ? 'bg-red-900/80 border-red-500'
-                  : 'bg-white/10 border-[var(--spr-blue)]'
-              }`}
+                  : msg.read
+                    ? 'bg-white/10 border-[var(--spr-blue)]'
+                    : 'bg-white/20 border-[var(--spr-blue)] shadow-[0_0_16px_2px_rgba(41,83,166,0.4)] animate-glow'
+              } ${!msg.read ? 'hover:shadow-[0_0_24px_4px_rgba(41,83,166,0.6)] cursor-pointer' : ''}`}
+              style={{transition: 'box-shadow 0.3s, border-color 0.3s'}}
             >
               <div className="flex-shrink-0 mt-1">
                 {msg.type === 'emergency' ? alertIcon : infoIcon}
