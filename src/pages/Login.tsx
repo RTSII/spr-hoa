@@ -60,7 +60,7 @@ const Login = () => {
       <div 
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url('/assets/images/aerial_view.jpg')`,
+          backgroundImage: `url('/src/assets/images/aerial_view.jpg')`,
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-blue-900/65 via-blue-800/55 to-teal-700/65"></div>
@@ -114,7 +114,7 @@ const Login = () => {
               >
                 <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-white/20 to-white/5 border border-white/30 flex items-center justify-center backdrop-blur-sm">
                   <img
-                    src="/spr_logo.jpg"
+                    src="/src/assets/images/spr_logo.jpg"
                     alt="Sandpiper Run"
                     className="w-16 h-16 rounded-full object-cover shadow-lg"
                   />
@@ -187,6 +187,7 @@ const Login = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    autoComplete="email"
                     className="w-full pl-12 pr-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400/50 focus:border-teal-400/50 transition-all duration-300 backdrop-blur-sm"
                     placeholder="your@email.com"
                   />
@@ -208,6 +209,7 @@ const Login = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    autoComplete="current-password"
                     className="w-full pl-12 pr-12 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400/50 focus:border-teal-400/50 transition-all duration-300 backdrop-blur-sm"
                     placeholder="••••••••"
                   />
