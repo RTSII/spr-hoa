@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react'
-import { User } from '@supabase/supabase-js'
+import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 
 type Profile = {
@@ -19,6 +19,7 @@ type Profile = {
 type AuthContextType = {
   user: User | null
   profile: Profile | null
+  session: Session | null
   loading: boolean
   signIn: (email: string, password: string) => Promise<void>
   signUp: (email: string, password: string, profileData: {
@@ -33,6 +34,7 @@ type AuthContextType = {
   }) => Promise<void>
   signOut: () => Promise<void>
   updateProfile: (updates: Partial<Profile>) => Promise<void>
+  resetPassword: (email: string) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -48,27 +50,44 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
+  const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Check active sessions and sets the user
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        fetchProfile(session.user.id)
+    // Get initial session
+    const getInitialSession = async () => {
+      const { data: { session }, error } = await supabase.auth.getSession()
+      
+      if (error) {
+        console.error('Error getting session:', error)
+      } else {
+        setSession(session)
+        setUser(session?.user ?? null)
+        if (session?.user) {
+          await fetchProfile(session.user.id)
+        }
       }
       setLoading(false)
-    })
+    }
 
-    // Listen for changes on auth state (sign in, sign out, etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
-      if (session?.user) {
-        fetchProfile(session.user.id)
-      } else {
-        setProfile(null)
+    getInitialSession()
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email)
+        setSession(session)
+        setUser(session?.user ?? null)
+        
+        if (session?.user) {
+          await fetchProfile(session.user.id)
+        } else {
+          setProfile(null)
+        }
+        
+        setLoading(false)
       }
-    })
+    )
 
     return () => subscription.unsubscribe()
   }, [])
@@ -81,7 +100,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .eq('user_id', userId)
         .single()
 
-      if (error) throw error
+      if (error) {
+        if (error.code !== 'PGRST116') { // Not found error
+          console.error('Error fetching profile:', error)
+        }
+        return
+      }
+      
       setProfile(data)
     } catch (error) {
       console.error('Error fetching profile:', error)
@@ -89,11 +114,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.toLowerCase().trim(),
       password,
     })
-    if (error) throw error
+
+    if (error) {
+      throw new Error(error.message)
+    }
+
+    return data
   }
 
   const signUp = async (
@@ -110,25 +140,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       showUnit: boolean
     }
   ) => {
-    // First, create the auth user
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-    })
+    // Validate unit number exists in owners_master
+    const { data: ownerData, error: ownerError } = await supabase
+      .from('owners_master')
+      .select('unit_number')
+      .eq('unit_number', profileData.unitNumber)
+      .single()
 
-    if (authError) throw authError
-    if (!authData.user) throw new Error('Failed to create user')
-
-    // If no session (email confirmation required), sign in the user manually
-    if (!authData.session) {
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      })
-      if (signInError) throw signInError
+    if (ownerError || !ownerData) {
+      throw new Error('Invalid unit number. Please contact the HOA office.')
     }
 
-    // Then create the profile
+    // Create auth user
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: email.toLowerCase().trim(),
+      password,
+      options: {
+        emailRedirectTo: `${window.location.origin}/dashboard`
+      }
+    })
+
+    if (authError) {
+      throw new Error(authError.message)
+    }
+
+    if (!authData.user) {
+      throw new Error('Failed to create user account')
+    }
+
+    // Create owner profile
     const { error: profileError } = await supabase
       .from('owner_profiles')
       .insert({
@@ -136,7 +176,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         unit_number: profileData.unitNumber,
         first_name: profileData.firstName,
         last_name: profileData.lastName,
-        email: email,
+        email: email.toLowerCase().trim(),
         phone: profileData.phone,
         directory_opt_in: profileData.directoryOptIn,
         show_email: profileData.showEmail,
@@ -145,19 +185,38 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       })
 
     if (profileError) {
-      // If profile creation fails, we should clean up the auth user
+      // Clean up auth user if profile creation fails
       await supabase.auth.signOut()
-      throw profileError
+      throw new Error(`Failed to create profile: ${profileError.message}`)
     }
+
+    return authData
   }
 
   const signOut = async () => {
     const { error } = await supabase.auth.signOut()
-    if (error) throw error
+    if (error) {
+      throw new Error(error.message)
+    }
+  }
+
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(
+      email.toLowerCase().trim(),
+      {
+        redirectTo: `${window.location.origin}/dashboard`
+      }
+    )
+
+    if (error) {
+      throw new Error(error.message)
+    }
   }
 
   const updateProfile = async (updates: Partial<Profile>) => {
-    if (!user || !profile) throw new Error('No user logged in')
+    if (!user || !profile) {
+      throw new Error('No user logged in')
+    }
 
     const { data, error } = await supabase
       .from('owner_profiles')
@@ -166,18 +225,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      throw new Error(error.message)
+    }
+    
     setProfile(data)
+    return data
   }
 
   const value = {
     user,
     profile,
+    session,
     loading,
     signIn,
     signUp,
     signOut,
     updateProfile,
+    resetPassword,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
