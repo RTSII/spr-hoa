@@ -1,21 +1,31 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
-import Login from './pages/Login';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Timeline from './Timeline'; // Assuming Timeline.tsx is in the same 'pages' folder
+import Home from './Home';
+import About from './About';
+import Contact from './Contact';
+import Login from './Login';
+import Register from './Register';
+import Dashboard from './Dashboard';
+import NotFound from './NotFound';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
+    <Router>
+      <div className="App">
         <Routes>
+          <Route path="/" element={<Home />} />
+          {/* --- The route is now clean --- */}
+          <Route path="/timeline" element={<Timeline />} />
+          {/* ----------------------------- */}
+          <Route path="/about" element={<About />} />
+          <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/" element={<Navigate to="/login" replace />} />
-          <Route path="/register" element={<div className="min-h-screen bg-gray-100 flex items-center justify-center"><p>Register page coming soon...</p></div>} />
-          <Route path="/forgot-password" element={<div className="min-h-screen bg-gray-100 flex items-center justify-center"><p>Forgot password page coming soon...</p></div>} />
-          <Route path="/dashboard" element={<div className="min-h-screen bg-gray-100 flex items-center justify-center"><p>Welcome to your dashboard!</p></div>} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="*" element={<NotFound />} />
         </Routes>
-      </Router>
-    </AuthProvider>
+      </div>
+    </Router>
   );
 }
 
