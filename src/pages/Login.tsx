@@ -6,7 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 
 const Login = () => {
   const navigate = useNavigate()
-  const { signIn } = useAuth()
+  const { signIn, resetPassword } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -28,13 +28,32 @@ const Login = () => {
     }
   }
 
+  const handleForgotPassword = async () => {
+    if (!email.trim()) {
+      setError('Please enter your email address to reset your password.')
+      return;
+    }
+
+    setError('')
+    setLoading(true)
+
+    try {
+      await resetPassword(email)
+      setError('Password reset email sent successfully.');
+    } catch (err: any) {
+      setError(err.message || 'Failed to send password reset email.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Background with aerial view */}
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url('/assets/images/aerial_view.jpg')`,
+          backgroundImage: `url('/src/assets/images/aerial_view.jpg')`,
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-blue-900/80 via-blue-800/70 to-teal-700/80"></div>
@@ -148,6 +167,7 @@ const Login = () => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
+                    autoComplete="username" // Added autocomplete attribute
                     className="w-full pl-12 pr-4 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400/50 focus:border-teal-400/50 transition-all duration-300 backdrop-blur-sm"
                     placeholder="your@email.com"
                   />
@@ -169,9 +189,9 @@ const Login = () => {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    autoComplete="current-password" // Added autocomplete attribute
                     className="w-full pl-12 pr-12 py-4 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400/50 focus:border-teal-400/50 transition-all duration-300 backdrop-blur-sm"
                     placeholder="••••••••"
-                    autoComplete="current-password"
                   />
                   <button
                     type="button"
@@ -217,29 +237,21 @@ const Login = () => {
             >
               <div className="mt-8 space-y-4">
                 <div className="text-center">
-                  <Link
-                    to="/forgot-password"
+                  <button
+                    onClick={handleForgotPassword}
+                    disabled={loading}
                     className="text-teal-300 hover:text-teal-200 text-sm font-medium transition-colors duration-200"
                   >
                     Forgot your password?
-                  </Link>
-                </div>
-
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-white/20"></div>
-                  </div>
-                  <div className="relative flex justify-center text-sm">
-                    <span className="px-4 bg-transparent text-white/60">New to Sandpiper Run?</span>
-                  </div>
+                  </button>
                 </div>
 
                 <div className="text-center">
                   <Link
-                    to="/register"
+                    to="/invite-request"
                     className="inline-flex items-center space-x-2 text-white hover:text-teal-300 font-medium transition-colors duration-200 group"
                   >
-                    <span>Create an account</span>
+                    <span>New to Sandpiper Run?</span>
                     <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
                   </Link>
                 </div>
@@ -255,7 +267,7 @@ const Login = () => {
           >
             <div className="mt-8 text-center">
               <p className="text-white/60 text-sm">
-                © 2024 Sandpiper Run Community
+                © 2025 PM-Shift Pool Guy
               </p>
             </div>
           </motion.div>
