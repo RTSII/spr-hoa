@@ -1,144 +1,402 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabase';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  Mail,
+  MailOpen,
+  AlertTriangle,
+  Info,
+  CheckCircle,
+  Camera,
+  MessageSquare,
+  Clock,
+  User,
+  Archive,
+  Eye,
+  X
+} from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { useAuth } from '@/contexts/AuthContext';
 
-export type InboxMessage = {
+interface SiteMessage {
   id: string;
-  title: string;
-  body: string;
-  sent_at: string;
-  type: 'emergency' | 'notice' | 'info';
-  read?: boolean;
-};
+  sender_type: 'system' | 'admin' | 'user';
+  sender_name: string;
+  sender_email: string;
+  message_type: 'notification' | 'photo_rejection' | 'photo_approval' | 'alert' | 'general' | 'admin_message';
+  subject: string;
+  content: string;
+  is_read: boolean;
+  is_archived: boolean;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  created_at: string;
+  read_at?: string;
+  metadata?: any;
+}
 
-const alertIcon = (
-  <svg className="w-6 h-6 text-red-500 mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M4.93 19h14.14c1.54 0 2.5-1.67 1.94-3.09l-7.07-15.18A2 2 0 0012 2a2 2 0 00-1.94 1.73L2.99 15.91C2.43 17.33 3.39 19 4.93 19z"/></svg>
-);
+interface OwnerInboxProps {
+  user_id: string;
+  isModal?: boolean;
+  onClose?: () => void;
+}
 
-const infoIcon = (
-  <svg className="w-6 h-6 text-[var(--spr-blue)] mr-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01"/></svg>
-);
-
-const OwnerInbox: React.FC<{ user_id: string }> = ({ user_id }) => {
-  const [messages, setMessages] = useState<InboxMessage[]>([]);
+const OwnerInbox: React.FC<OwnerInboxProps> = ({ user_id, isModal = false, onClose }) => {
+  const { user } = useAuth();
+  const [messages, setMessages] = useState<SiteMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [markingRead, setMarkingRead] = useState<string | null>(null);
+  const [selectedMessage, setSelectedMessage] = useState<SiteMessage | null>(null);
+  const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all');
 
   useEffect(() => {
-    async function fetchMessages() {
-      setLoading(true);
-      setError('');
-      try {
-        // Get owner profile id from user_id
-        const { data: owner, error: ownerError } = await supabase
-          .from('owner_profiles')
-          .select('id')
-          .eq('user_id', user_id)
-          .maybeSingle();
-        if (ownerError || !owner) throw new Error('Could not find owner profile.');
-        // Fetch messages for this owner or broadcast
-        const { data, error: msgError } = await supabase
-          .from('owner_messages')
-          .select('*')
-          .or(`owner_id.eq.${owner.id},broadcast.eq.true`)
-          .order('sent_at', { ascending: false });
-        if (msgError) throw msgError;
-        setMessages(
-          data.sort((a: InboxMessage, b: InboxMessage) => {
-            if ((a.read ? 1 : 0) !== (b.read ? 1 : 0)) return a.read ? 1 : -1;
-            if (a.type !== b.type) return a.type === 'emergency' ? -1 : 1;
-            return 0;
-          })
-        );
-        // Optionally, mark all as read when inbox is opened
-        const unreadIds = data.filter((msg: InboxMessage) => !msg.read).map((msg: InboxMessage) => msg.id);
-        if (unreadIds.length > 0) {
-          markMessagesRead(unreadIds);
-        }
-      } catch (err: unknown) {
-        if (err && typeof err === 'object' && 'message' in err && typeof (err as any).message === 'string') {
-          setError((err as any).message);
-        } else {
-          setError('Failed to load messages');
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
     fetchMessages();
   }, [user_id]);
 
-  // Mark messages as read in Supabase
-  const markMessagesRead = async (ids: string[]) => {
-    setMarkingRead(ids[0] || null);
+  const fetchMessages = async () => {
+    setLoading(true);
+    setError('');
+
     try {
-      await supabase.from('owner_messages').update({ read: true }).in('id', ids);
-      setMessages(prev => prev.map(msg => ids.includes(msg.id) ? { ...msg, read: true } : msg));
-    } catch (err) {
-      // Silently fail for now
+      const { data, error: fetchError } = await supabase
+        .from('site_messages')
+        .select('*')
+        .eq('recipient_user_id', user_id)
+        .eq('is_archived', false)
+        .order('created_at', { ascending: false });
+
+      if (fetchError) throw fetchError;
+      setMessages(data || []);
+    } catch (err: any) {
+      console.error('Error fetching messages:', err);
+      setError(err.message || 'Failed to load messages');
     } finally {
-      setMarkingRead(null);
+      setLoading(false);
     }
   };
 
-  return (
-    <div className="glass-card p-8 space-y-6">
-      <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-        Owner Inbox
-        {messages.some(m => !m.read) && (
-          <span className="ml-2 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-full animate-pulse" aria-label="Unread messages">
-            {messages.filter(m => !m.read).length} unread
-          </span>
-        )}
-      </h2>
-      {loading ? (
-        <div className="text-white/70 text-center">Loading...</div>
-      ) : error ? (
-        <div className="text-red-400 text-center">{error}</div>
-      ) : (
-        <div className="space-y-4">
-          {messages.length === 0 && (
-            <div className="text-white/70 text-center">No messages yet.</div>
+  const markAsRead = async (messageId: string) => {
+    try {
+      const { error } = await supabase.rpc('mark_message_as_read', {
+        p_message_id: messageId
+      });
+
+      if (error) throw error;
+
+      // Update local state
+      setMessages(prev => prev.map(msg =>
+        msg.id === messageId ? { ...msg, is_read: true, read_at: new Date().toISOString() } : msg
+      ));
+    } catch (error) {
+      console.error('Error marking message as read:', error);
+    }
+  };
+
+  const archiveMessage = async (messageId: string) => {
+    try {
+      const { error } = await supabase
+        .from('site_messages')
+        .update({ is_archived: true, archived_at: new Date().toISOString() })
+        .eq('id', messageId)
+        .eq('recipient_user_id', user_id);
+
+      if (error) throw error;
+
+      // Remove from local state
+      setMessages(prev => prev.filter(msg => msg.id !== messageId));
+      setSelectedMessage(null);
+    } catch (error) {
+      console.error('Error archiving message:', error);
+    }
+  };
+
+  const getMessageIcon = (message: SiteMessage) => {
+    switch (message.message_type) {
+      case 'photo_rejection':
+        return <Camera className="h-4 w-4 text-red-400" />;
+      case 'photo_approval':
+        return <CheckCircle className="h-4 w-4 text-green-400" />;
+      case 'alert':
+        return <AlertTriangle className="h-4 w-4 text-yellow-400" />;
+      case 'admin_message':
+        return <MessageSquare className="h-4 w-4 text-blue-400" />;
+      default:
+        return <Info className="h-4 w-4 text-blue-400" />;
+    }
+  };
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'urgent':
+        return 'text-red-400 bg-red-500/20 border-red-500/30';
+      case 'high':
+        return 'text-orange-400 bg-orange-500/20 border-orange-500/30';
+      case 'medium':
+        return 'text-blue-400 bg-blue-500/20 border-blue-500/30';
+      default:
+        return 'text-gray-400 bg-gray-500/20 border-gray-500/30';
+    }
+  };
+
+  const filteredMessages = messages.filter(message => {
+    switch (filter) {
+      case 'unread':
+        return !message.is_read;
+      case 'read':
+        return message.is_read;
+      default:
+        return true;
+    }
+  });
+
+  const unreadCount = messages.filter(msg => !msg.is_read).length;
+
+  const handleMessageClick = (message: SiteMessage) => {
+    setSelectedMessage(message);
+    if (!message.is_read) {
+      markAsRead(message.id);
+    }
+  };
+
+  const InboxContent = () => (
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="flex items-center justify-between p-6 border-b border-white/10">
+        <div className="flex items-center space-x-3">
+          <Mail className="h-6 w-6 text-blue-400" />
+          <h2 className="text-2xl font-bold text-white">My Inbox</h2>
+          {unreadCount > 0 && (
+            <span className="px-2 py-1 bg-red-500 text-white text-xs rounded-full">
+              {unreadCount}
+            </span>
           )}
-          {messages.map((msg) => (
-            <motion.div
-              key={msg.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              tabIndex={0}
-              role="article"
-              aria-label={msg.type === 'emergency' ? `Emergency: ${msg.title}` : msg.title}
-              className={`flex items-start p-4 rounded-lg shadow-lg transition-all border-l-4 outline-none group focus:ring-2 focus:ring-[var(--spr-blue)] focus:ring-offset-2 focus:ring-offset-black ${
-                msg.type === 'emergency'
-                  ? 'bg-red-900/80 border-red-500'
-                  : msg.read
-                    ? 'bg-white/10 border-[var(--spr-blue)]'
-                    : 'bg-white/20 border-[var(--spr-blue)] shadow-[0_0_16px_2px_rgba(41,83,166,0.4)] animate-glow'
-              } ${!msg.read ? 'hover:shadow-[0_0_24px_4px_rgba(41,83,166,0.6)] cursor-pointer' : ''}`}
-              style={{transition: 'box-shadow 0.3s, border-color 0.3s'}}
-            >
-              <div className="flex-shrink-0 mt-1">
-                {msg.type === 'emergency' ? alertIcon : infoIcon}
+        </div>
+        {isModal && onClose && (
+          <button
+            onClick={onClose}
+            className="text-white/70 hover:text-white transition-colors"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        )}
+      </div>
+
+      {/* Filter tabs */}
+      <div className="flex space-x-1 p-4 border-b border-white/10">
+        {[
+          { key: 'all', label: 'All', count: messages.length },
+          { key: 'unread', label: 'Unread', count: unreadCount },
+          { key: 'read', label: 'Read', count: messages.length - unreadCount }
+        ].map(tab => (
+          <button
+            key={tab.key}
+            onClick={() => setFilter(tab.key as any)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              filter === tab.key
+                ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
+                : 'text-white/70 hover:text-white hover:bg-white/10'
+            }`}
+          >
+            {tab.label} ({tab.count})
+          </button>
+        ))}
+      </div>
+
+      <div className="flex flex-1 overflow-hidden">
+        {/* Message List */}
+        <div className="w-1/2 border-r border-white/10 overflow-y-auto">
+          {loading ? (
+            <div className="flex items-center justify-center h-full">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400"></div>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center h-full text-red-400">
+              <div className="text-center">
+                <AlertTriangle className="h-12 w-12 mx-auto mb-4" />
+                <p>{error}</p>
               </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <span className={`font-semibold ${msg.type === 'emergency' ? 'text-red-300' : 'text-[var(--spr-blue)]'}`}>{msg.title}</span>
-                  <span className="ml-auto text-xs text-white/50">{new Date(msg.sent_at).toLocaleString()}</span>
+            </div>
+          ) : filteredMessages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-white/60">
+              <Mail className="h-12 w-12 mb-4 opacity-50" />
+              <p>No messages found</p>
+            </div>
+          ) : (
+            <div className="space-y-1 p-4">
+              {filteredMessages.map((message) => (
+                <motion.div
+                  key={message.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className={`p-4 rounded-lg cursor-pointer transition-all ${
+                    selectedMessage?.id === message.id
+                      ? 'bg-blue-500/20 border border-blue-500/30'
+                      : message.is_read
+                      ? 'bg-white/5 hover:bg-white/10'
+                      : 'bg-blue-500/10 hover:bg-blue-500/15 border border-blue-500/20'
+                  }`}
+                  onClick={() => handleMessageClick(message)}
+                >
+                  <div className="flex items-start space-x-3">
+                    <div className="flex-shrink-0 mt-1">
+                      {getMessageIcon(message)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between mb-1">
+                        <p className={`text-sm font-medium truncate ${
+                          message.is_read ? 'text-white/80' : 'text-white'
+                        }`}>
+                          {message.subject}
+                        </p>
+                        <span className={`px-2 py-1 text-xs rounded border ${getPriorityColor(message.priority)}`}>
+                          {message.priority}
+                        </span>
+                      </div>
+                      <p className="text-white/60 text-sm truncate mb-2">
+                        {message.content}
+                      </p>
+                      <div className="flex items-center justify-between text-xs text-white/50">
+                        <span className="flex items-center space-x-1">
+                          <User className="h-3 w-3" />
+                          <span>{message.sender_name}</span>
+                        </span>
+                        <span className="flex items-center space-x-1">
+                          <Clock className="h-3 w-3" />
+                          <span>{new Date(message.created_at).toLocaleDateString()}</span>
+                        </span>
+                      </div>
+                    </div>
+                    {!message.is_read && (
+                      <div className="w-2 h-2 bg-blue-400 rounded-full flex-shrink-0 mt-2"></div>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Message Detail */}
+        <div className="w-1/2 overflow-y-auto">
+          {selectedMessage ? (
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  {getMessageIcon(selectedMessage)}
+                  <h3 className="text-xl font-semibold text-white">
+                    {selectedMessage.subject}
+                  </h3>
                 </div>
-                <div className="text-white/90 mt-1">{msg.body}</div>
-                {msg.type === 'emergency' && (
-                  <div className="mt-2 text-xs text-red-200 italic">This is an emergency/short-notice alert. Residents will be notified by email{` and SMS (future)`}.</div>
+                <div className="flex items-center space-x-2">
+                  <span className={`px-2 py-1 text-xs rounded border ${getPriorityColor(selectedMessage.priority)}`}>
+                    {selectedMessage.priority}
+                  </span>
+                  <button
+                    onClick={() => archiveMessage(selectedMessage.id)}
+                    className="p-2 text-white/70 hover:text-white hover:bg-white/10 rounded"
+                    title="Archive"
+                  >
+                    <Archive className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center space-x-4 text-sm text-white/70">
+                  <span className="flex items-center space-x-1">
+                    <User className="h-4 w-4" />
+                    <span>From: {selectedMessage.sender_name}</span>
+                  </span>
+                  {selectedMessage.sender_email && (
+                    <span className="flex items-center space-x-1">
+                      <Mail className="h-4 w-4" />
+                      <span>{selectedMessage.sender_email}</span>
+                    </span>
+                  )}
+                  <span className="flex items-center space-x-1">
+                    <Clock className="h-4 w-4" />
+                    <span>{new Date(selectedMessage.created_at).toLocaleString()}</span>
+                  </span>
+                </div>
+
+                {selectedMessage.read_at && (
+                  <div className="text-sm text-white/50">
+                    <span className="flex items-center space-x-1">
+                      <MailOpen className="h-4 w-4" />
+                      <span>Read: {new Date(selectedMessage.read_at).toLocaleString()}</span>
+                    </span>
+                  </div>
+                )}
+
+                <div className="prose prose-invert max-w-none">
+                  <div className="text-white/90 leading-relaxed whitespace-pre-wrap">
+                    {selectedMessage.content}
+                  </div>
+                </div>
+
+                {/* Metadata for photo rejections */}
+                {selectedMessage.message_type === 'photo_rejection' && selectedMessage.metadata && (
+                  <div className="mt-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
+                    <h4 className="text-red-400 font-medium mb-2">Photo Rejection Details</h4>
+                    <div className="space-y-2 text-sm">
+                      <div>
+                        <span className="text-white/60">Photo Title:</span>
+                        <span className="text-white ml-2">{selectedMessage.metadata.photo_title}</span>
+                      </div>
+                      <div>
+                        <span className="text-white/60">Photo Type:</span>
+                        <span className="text-white ml-2">{selectedMessage.metadata.photo_type}</span>
+                      </div>
+                      <div>
+                        <span className="text-white/60">Rejection Reason:</span>
+                        <span className="text-white ml-2">{selectedMessage.metadata.rejection_reason}</span>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
-            </motion.div>
-          ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-full text-white/60">
+              <div className="text-center">
+                <Eye className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Select a message to view details</p>
+              </div>
+            </div>
+          )}
         </div>
-      )}
-      <div className="mt-8 text-xs text-white/60 text-center">
-        <span className="block">For emergencies (e.g. elevator out of service, water/power shut-off), residents will receive email and (future) SMS notifications.</span>
       </div>
     </div>
+  );
+
+  if (isModal) {
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.95, opacity: 0 }}
+          className="bg-slate-900/95 backdrop-blur-xl rounded-2xl border border-white/20 w-full max-w-5xl h-[80vh] overflow-hidden"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <InboxContent />
+        </motion.div>
+      </motion.div>
+    );
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="glass-card p-0 h-[600px] overflow-hidden"
+    >
+      <InboxContent />
+    </motion.div>
   );
 };
 

@@ -24,7 +24,8 @@
       "@/*": [
         "./src/*"
       ]
-    }
+    },
+    "jsxImportSource": "same-runtime/dist"
   },
   "include": [
     "src"

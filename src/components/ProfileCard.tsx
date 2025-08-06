@@ -1,345 +1,163 @@
-import React, { useEffect, useRef, useCallback, useMemo } from "react";
-import "./ProfileCard.css";
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
+import { Mail, Phone, Home, Edit2, Check, X } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import ProfilePictureUpload from './ProfilePictureUpload';
 
-const DEFAULT_BEHIND_GRADIENT =
-  "radial-gradient(farthest-side circle at var(--pointer-x) var(--pointer-y),hsla(266,100%,90%,var(--card-opacity)) 4%,hsla(266,50%,80%,calc(var(--card-opacity)*0.75)) 10%,hsla(266,25%,70%,calc(var(--card-opacity)*0.5)) 50%,hsla(266,0%,60%,0) 100%),radial-gradient(35% 52% at 55% 20%,#00ffaac4 0%,#073aff00 100%),radial-gradient(100% 100% at 50% 50%,#00c1ffff 1%,#073aff00 76%),conic-gradient(from 124deg at 50% 50%,#c137ffff 0%,#07c6ffff 40%,#07c6ffff 60%,#c137ffff 100%)";
+interface ProfileCardProps {
+  editable?: boolean;
+  minimal?: boolean;
+}
 
-const DEFAULT_INNER_GRADIENT =
-  "linear-gradient(145deg,#60496e8c 0%,#71C4FF44 100%)";
+const ProfileCard: React.FC<ProfileCardProps> = ({ editable = false, minimal = false }) => {
+  const { profile } = useAuth();
+  const [isEditing, setIsEditing] = useState(false);
+  const [currentPicture, setCurrentPicture] = useState<string | undefined>(profile?.profile_picture_url);
 
-const ANIMATION_CONFIG = {
-  SMOOTH_DURATION: 600,
-  INITIAL_DURATION: 1500,
-  INITIAL_X_OFFSET: 70,
-  INITIAL_Y_OFFSET: 60,
-  DEVICE_BETA_OFFSET: 20,
-};
+  if (!profile) return null;
 
-const clamp = (value: number, min = 0, max = 100) =>
-  Math.min(Math.max(value, min), max);
+  const handlePictureUploadComplete = (url: string) => {
+    setCurrentPicture(url);
+  };
 
-const round = (value: number, precision = 3) =>
-  parseFloat(value.toFixed(precision));
+  // Default profile picture if none exists
+  const defaultProfilePicture = `https://ui-avatars.com/api/?name=${profile.first_name}+${profile.last_name}&background=0D8ABC&color=fff&size=256`;
 
-const adjust = (
-  value: number,
-  fromMin: number,
-  fromMax: number,
-  toMin: number,
-  toMax: number
-) =>
-  round(toMin + ((toMax - toMin) * (value - fromMin)) / (fromMax - fromMin));
-
-const easeInOutCubic = (x: number) =>
-  x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
-
-type ProfileCardProps = {
-  avatarUrl?: string;
-  iconUrl?: string;
-  grainUrl?: string;
-  behindGradient?: string;
-  innerGradient?: string;
-  showBehindGradient?: boolean;
-  className?: string;
-  enableTilt?: boolean;
-  enableMobileTilt?: boolean;
-  mobileTiltSensitivity?: number;
-  miniAvatarUrl?: string;
-  name?: string;
-  title?: string;
-  handle?: string;
-  status?: string;
-  contactText?: string;
-  showUserInfo?: boolean;
-  onContactClick?: () => void;
-};
-
-const ProfileCardComponent: React.FC<ProfileCardProps> = ({
-  avatarUrl = "<Placeholder for avatar URL>",
-  iconUrl = "<Placeholder for icon URL>",
-  grainUrl = "<Placeholder for grain URL>",
-  behindGradient,
-  innerGradient,
-  showBehindGradient = true,
-  className = "",
-  enableTilt = true,
-  enableMobileTilt = false,
-  mobileTiltSensitivity = 5,
-  miniAvatarUrl,
-  name = "Javi A. Torres",
-  title = "Software Engineer",
-  handle = "javicodes",
-  status = "Online",
-  contactText = "Contact",
-  showUserInfo = true,
-  onContactClick,
-}) => {
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const cardRef = useRef<HTMLElement>(null);
-
-  const animationHandlers = useMemo(() => {
-    if (!enableTilt) return null;
-    let rafId: number | null = null;
-    const updateCardTransform = (
-      offsetX: number,
-      offsetY: number,
-      card: HTMLElement,
-      wrap: HTMLElement
-    ) => {
-      const width = card.clientWidth;
-      const height = card.clientHeight;
-      const percentX = clamp((100 / width) * offsetX);
-      const percentY = clamp((100 / height) * offsetY);
-      const centerX = percentX - 50;
-      const centerY = percentY - 50;
-      const properties: Record<string, string> = {
-        "--pointer-x": `${percentX}%`,
-        "--pointer-y": `${percentY}%`,
-        "--background-x": `${adjust(percentX, 0, 100, 35, 65)}%`,
-        "--background-y": `${adjust(percentY, 0, 100, 35, 65)}%`,
-        "--pointer-from-center": `${clamp(Math.hypot(percentY - 50, percentX - 50) / 50, 0, 1)}`,
-        "--pointer-from-top": `${percentY / 100}`,
-        "--pointer-from-left": `${percentX / 100}`,
-        "--rotate-x": `${round(-(centerX / 5))}deg`,
-        "--rotate-y": `${round(centerY / 4)}deg`,
-      };
-      Object.entries(properties).forEach(([property, value]) => {
-        (wrap.style as CSSStyleDeclaration).setProperty(property, value);
-      });
-    };
-    const createSmoothAnimation = (
-      duration: number,
-      startX: number,
-      startY: number,
-      card: HTMLElement,
-      wrap: HTMLElement
-    ) => {
-      const startTime = performance.now();
-      const targetX = wrap.clientWidth / 2;
-      const targetY = wrap.clientHeight / 2;
-      const animationLoop = (currentTime: number) => {
-        const elapsed = currentTime - startTime;
-        const progress = clamp(elapsed / duration);
-        const easedProgress = easeInOutCubic(progress);
-        const currentX = adjust(easedProgress, 0, 1, startX, targetX);
-        const currentY = adjust(easedProgress, 0, 1, startY, targetY);
-        updateCardTransform(currentX, currentY, card, wrap);
-        if (progress < 1) {
-          rafId = requestAnimationFrame(animationLoop);
-        }
-      };
-      rafId = requestAnimationFrame(animationLoop);
-    };
-    return {
-      updateCardTransform,
-      createSmoothAnimation,
-      cancelAnimation: () => {
-        if (rafId) {
-          cancelAnimationFrame(rafId);
-          rafId = null;
-        }
-      },
-    };
-  }, [enableTilt]);
-
-  const handlePointerMove = useCallback(
-    (event: React.PointerEvent) => {
-      const card = cardRef.current;
-      const wrap = wrapRef.current;
-      if (!card || !wrap || !animationHandlers) return;
-      const rect = card.getBoundingClientRect();
-      animationHandlers.updateCardTransform(
-        event.clientX - rect.left,
-        event.clientY - rect.top,
-        card,
-        wrap
-      );
-    },
-    [animationHandlers]
-  );
-
-  const handlePointerEnter = useCallback(() => {
-    const card = cardRef.current;
-    const wrap = wrapRef.current;
-    if (!card || !wrap || !animationHandlers) return;
-    animationHandlers.cancelAnimation();
-    wrap.classList.add("active");
-    card.classList.add("active");
-  }, [animationHandlers]);
-
-  const handlePointerLeave = useCallback(
-    (event: React.PointerEvent) => {
-      const card = cardRef.current;
-      const wrap = wrapRef.current;
-      if (!card || !wrap || !animationHandlers) return;
-      animationHandlers.createSmoothAnimation(
-        ANIMATION_CONFIG.SMOOTH_DURATION,
-        event.offsetX,
-        event.offsetY,
-        card,
-        wrap
-      );
-      wrap.classList.remove("active");
-      card.classList.remove("active");
-    },
-    [animationHandlers]
-  );
-
-  const handleDeviceOrientation = useCallback(
-    (event: DeviceOrientationEvent) => {
-      const card = cardRef.current;
-      const wrap = wrapRef.current;
-      if (!card || !wrap || !animationHandlers) return;
-      const { beta, gamma } = event;
-      if (typeof beta !== "number" || typeof gamma !== "number") return;
-      animationHandlers.updateCardTransform(
-        card.clientHeight / 2 + gamma * mobileTiltSensitivity,
-        card.clientWidth / 2 + (beta - ANIMATION_CONFIG.DEVICE_BETA_OFFSET) * mobileTiltSensitivity,
-        card,
-        wrap
-      );
-    },
-    [animationHandlers, mobileTiltSensitivity]
-  );
-
-  useEffect(() => {
-    if (!enableTilt || !animationHandlers) return;
-    const card = cardRef.current;
-    const wrap = wrapRef.current;
-    if (!card || !wrap) return;
-    const pointerMoveHandler = handlePointerMove;
-    const pointerEnterHandler = handlePointerEnter;
-    const pointerLeaveHandler = handlePointerLeave;
-    const deviceOrientationHandler = handleDeviceOrientation;
-    const handleClick = () => {
-      if (!enableMobileTilt || location.protocol !== 'https:') return;
-      if (typeof window.DeviceMotionEvent.requestPermission === 'function') {
-        window.DeviceMotionEvent
-          .requestPermission()
-          .then((state: string) => {
-            if (state === 'granted') {
-              window.addEventListener('deviceorientation', deviceOrientationHandler);
-            }
-          })
-          .catch((err: unknown) => console.error(err));
-      } else {
-        window.addEventListener('deviceorientation', deviceOrientationHandler);
-      }
-    };
-    card.addEventListener("pointerenter", pointerEnterHandler);
-    card.addEventListener("pointermove", pointerMoveHandler);
-    card.addEventListener("pointerleave", pointerLeaveHandler);
-    card.addEventListener("click", handleClick);
-    const initialX = wrap.clientWidth - ANIMATION_CONFIG.INITIAL_X_OFFSET;
-    const initialY = ANIMATION_CONFIG.INITIAL_Y_OFFSET;
-    animationHandlers.updateCardTransform(initialX, initialY, card, wrap);
-    animationHandlers.createSmoothAnimation(
-      ANIMATION_CONFIG.INITIAL_DURATION,
-      initialX,
-      initialY,
-      card,
-      wrap
-    );
-    return () => {
-      card.removeEventListener("pointerenter", pointerEnterHandler);
-      card.removeEventListener("pointermove", pointerMoveHandler);
-      card.removeEventListener("pointerleave", pointerLeaveHandler);
-      card.removeEventListener("click", handleClick);
-      window.removeEventListener('deviceorientation', deviceOrientationHandler);
-      animationHandlers.cancelAnimation();
-    };
-  }, [
-    enableTilt,
-    enableMobileTilt,
-    animationHandlers,
-    handlePointerMove,
-    handlePointerEnter,
-    handlePointerLeave,
-    handleDeviceOrientation,
-  ]);
-
-  const cardStyle = useMemo<React.CSSProperties>(
-    () =>
-    ({
-      "--icon": iconUrl ? `url(${iconUrl})` : "none",
-      "--grain": grainUrl ? `url(${grainUrl})` : "none",
-      "--behind-gradient": showBehindGradient
-        ? (behindGradient ?? DEFAULT_BEHIND_GRADIENT)
-        : "none",
-      "--inner-gradient": innerGradient ?? DEFAULT_INNER_GRADIENT,
-    } as React.CSSProperties),
-    [iconUrl, grainUrl, showBehindGradient, behindGradient, innerGradient]
-  );
-
-  const handleContactClick = useCallback(() => {
-    onContactClick?.();
-  }, [onContactClick]);
+  // Card style variations based on props
+  const cardStyle = minimal
+    ? "backdrop-blur-lg bg-white/10 border border-white/20 rounded-xl overflow-hidden"
+    : "backdrop-blur-lg bg-white/10 border border-white/20 rounded-xl shadow-xl overflow-hidden";
 
   return (
-    <div
-      ref={wrapRef}
-      className={`pc-card-wrapper ${className}`.trim()}
-      style={cardStyle}
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={cardStyle}
     >
-      <section ref={cardRef} className="pc-card">
-        <div className="pc-inside">
-          <div className="pc-shine" />
-          <div className="pc-glare" />
-          <div className="pc-content pc-avatar-content">
-            <img
-              className="avatar"
-              src={avatarUrl}
-              alt={`${name || 'User'} avatar`}
-              loading="lazy"
-              onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                const target = e.target as HTMLImageElement;
-                target.style.display = 'none';
-              }}
-            />
-            {showUserInfo && (
-              <div className="pc-user-info">
-                <div className="pc-user-details">
-                  <div className="pc-mini-avatar">
-                    <img
-                      src={miniAvatarUrl || avatarUrl}
-                      alt={`${name || 'User'} mini avatar`}
-                      loading="lazy"
-                      onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.opacity = '0.5';
-                        target.src = avatarUrl;
-                      }}
-                    />
-                  </div>
-                  <div className="pc-user-text">
-                    <div className="pc-handle">@{handle}</div>
-                    <div className="pc-status">{status}</div>
-                  </div>
+      <div className="p-6">
+        <div className="flex flex-col sm:flex-row items-center gap-6">
+          {/* Profile Picture Section */}
+          <div className="relative">
+            {isEditing ? (
+              <ProfilePictureUpload
+                onUploadComplete={handlePictureUploadComplete}
+                currentPicture={currentPicture}
+              />
+            ) : (
+              <div className="relative group">
+                <div className="w-28 h-28 rounded-full border-4 border-white/20 overflow-hidden">
+                  <img
+                    src={currentPicture || defaultProfilePicture}
+                    alt={`${profile.first_name} ${profile.last_name}`}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
+
+                {editable && (
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="absolute bottom-0 right-0 bg-gradient-to-r from-teal-500 to-blue-600 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <Edit2 className="h-4 w-4 text-white" />
+                  </button>
+                )}
+
+                {/* Profile picture status indicator */}
+                {profile.profile_picture_status === 'pending' && (
+                  <div className="absolute top-0 right-0 bg-yellow-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
+                    !
+                  </div>
+                )}
+
+                {profile.profile_picture_status === 'rejected' && (
+                  <div className="absolute top-0 right-0 bg-red-500 text-white text-xs rounded-full w-6 h-6 flex items-center justify-center border-2 border-white">
+                    <X className="h-3 w-3" />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {isEditing && editable && (
+              <div className="mt-3 flex justify-center space-x-2">
                 <button
-                  className="pc-contact-btn"
-                  onClick={handleContactClick}
-                  style={{ pointerEvents: "auto" }}
-                  type="button"
-                  aria-label={`Contact ${name || "user"}`}
+                  onClick={() => setIsEditing(false)}
+                  className="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white rounded-md text-sm flex items-center"
                 >
-                  {contactText}
+                  <X className="h-3 w-3 mr-1" /> Cancel
                 </button>
               </div>
             )}
           </div>
-          <div className="pc-content">
-            <div className="pc-details">
-              <h3>{name}</h3>
-              <p>{title}</p>
+
+          {/* Profile Information */}
+          <div className="flex-1 text-center sm:text-left">
+            <h2 className="text-2xl font-bold text-white">
+              {profile.first_name} {profile.last_name}
+            </h2>
+
+            <div className="mt-3 space-y-2">
+              <div className="flex items-center justify-center sm:justify-start text-white/80 gap-2">
+                <Home className="h-4 w-4 text-teal-400" />
+                <span>Unit {profile.unit_number}</span>
+              </div>
+
+              {!minimal && (
+                <>
+                  <div className="flex items-center justify-center sm:justify-start text-white/80 gap-2">
+                    <Mail className="h-4 w-4 text-teal-400" />
+                    <span>{profile.email}</span>
+                  </div>
+
+                  {profile.phone && (
+                    <div className="flex items-center justify-center sm:justify-start text-white/80 gap-2">
+                      <Phone className="h-4 w-4 text-teal-400" />
+                      <span>{profile.phone}</span>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>
-      </section>
-    </div>
+
+        {/* Profile Picture Status Messages */}
+        {currentPicture && profile.profile_picture_status === 'pending' && (
+          <div className="mt-4 p-3 bg-yellow-500/20 border border-yellow-500/30 rounded-lg">
+            <p className="text-yellow-300 text-sm">
+              Your profile picture is pending approval from the administrator.
+            </p>
+          </div>
+        )}
+
+        {profile.profile_picture_status === 'rejected' && (
+          <div className="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg">
+            <p className="text-red-300 text-sm">
+              Your profile picture was rejected: {profile.profile_picture_rejection_reason || 'No reason provided'}
+            </p>
+            {editable && !isEditing && (
+              <button
+                onClick={() => setIsEditing(true)}
+                className="mt-2 text-sm text-white bg-red-500/30 hover:bg-red-500/50 px-3 py-1 rounded-md transition-colors"
+              >
+                Upload New Picture
+              </button>
+            )}
+          </div>
+        )}
+      </div>
+
+      {!minimal && (
+        <div className="px-6 py-4 bg-gradient-to-r from-blue-900/50 to-teal-900/50 border-t border-white/10">
+          <div className="flex items-center">
+            <div className="h-2 w-2 rounded-full bg-teal-400 mr-2"></div>
+            <span className="text-teal-300 text-sm font-medium">
+              {profile.directory_opt_in ? 'Listed in Community Directory' : 'Not listed in Community Directory'}
+            </span>
+          </div>
+        </div>
+      )}
+    </motion.div>
   );
 };
-
-const ProfileCard = React.memo(ProfileCardComponent);
 
 export default ProfileCard;

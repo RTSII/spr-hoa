@@ -2,6 +2,7 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth } from '@/contexts/AuthContext'
 import { useState } from 'react'
+import sprLogoImg from '@/assets/images/spr_logo.jpg'
 
 const Layout = () => {
   const location = useLocation()
@@ -39,7 +40,7 @@ const Layout = () => {
               {/* Logo */}
               <Link to="/dashboard" className="flex items-center">
                 <img
-                  src="/src/assets/images/spr_logo.jpg"
+                  src={sprLogoImg}
                   alt="Sandpiper Run"
                   className="h-10 w-auto"
                 />

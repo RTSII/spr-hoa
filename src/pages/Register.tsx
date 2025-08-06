@@ -4,12 +4,15 @@ import { motion } from 'framer-motion'
 import { Eye, EyeOff, Mail, Lock, ArrowRight, AlertCircle, User, Phone, Home, CreditCard, Key, CheckCircle } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
+import aerialViewImg from '@/assets/images/aerial_view.jpg'
+import sprLogoImg from '@/assets/images/spr_logo.jpg'
+import ProfilePictureUpload from '@/components/ProfilePictureUpload'
 
 const Register = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { signUp } = useAuth()
-  
+
   // Form state
   const [formData, setFormData] = useState({
     firstName: '',
@@ -24,9 +27,10 @@ const Register = () => {
     directoryOptIn: false,
     showEmail: false,
     showPhone: false,
-    showUnit: true
+    showUnit: true,
+    profile_picture_url: '',
   })
-  
+
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [error, setError] = useState('')
@@ -40,6 +44,13 @@ const Register = () => {
       [name]: type === 'checkbox' ? checked : value
     }))
   }
+
+  const handleProfilePictureUpload = (url: string) => {
+    setFormData(prev => ({
+      ...prev,
+      profile_picture_url: url
+    }));
+  };
 
   const validateForm = () => {
     if (!formData.firstName.trim()) return 'First name is required'
@@ -112,24 +123,25 @@ const Register = () => {
         showEmail: formData.showEmail,
         showPhone: formData.showPhone,
         showUnit: formData.showUnit,
+        profile_picture_url: formData.profile_picture_url,
       })
 
       // Mark token as used
       await supabase
         .from('registration_tokens')
-        .update({ 
-          used: true, 
-          used_at: new Date().toISOString() 
+        .update({
+          used: true,
+          used_at: new Date().toISOString()
         })
         .eq('id', tokenData.id)
 
       setSuccessMessage('Registration successful! Redirecting to login...')
-      
+
       // Success - redirect to login after a short delay
       setTimeout(() => {
         navigate('/login?message=Registration successful! Please sign in with your new account.')
       }, 2000)
-      
+
     } catch (err: any) {
       console.error('Registration error:', err)
       setError(err.message || 'Registration failed. Please try again.')
@@ -141,10 +153,10 @@ const Register = () => {
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Background with aerial view */}
-      <div 
+      <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url('/src/assets/images/aerial_view.jpg')`,
+          backgroundImage: `url('${aerialViewImg}')`,
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-blue-900/65 via-blue-800/55 to-teal-700/65"></div>
@@ -153,11 +165,11 @@ const Register = () => {
       {/* Floating elements for visual interest */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
-          animate={{ 
+          animate={{
             y: [0, -20, 0],
             opacity: [0.3, 0.6, 0.3]
           }}
-          transition={{ 
+          transition={{
             duration: 6,
             repeat: Infinity,
             ease: "easeInOut"
@@ -165,11 +177,11 @@ const Register = () => {
           className="absolute top-20 left-10 w-32 h-32 bg-white/10 rounded-full blur-xl"
         />
         <motion.div
-          animate={{ 
+          animate={{
             y: [0, 30, 0],
             opacity: [0.2, 0.5, 0.2]
           }}
-          transition={{ 
+          transition={{
             duration: 8,
             repeat: Infinity,
             ease: "easeInOut",
@@ -198,14 +210,14 @@ const Register = () => {
               >
                 <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-white/20 to-white/5 border border-white/30 flex items-center justify-center backdrop-blur-sm">
                   <img
-                    src="/src/assets/images/spr_logo.jpg"
+                    src={sprLogoImg}
                     alt="Sandpiper Run"
                     className="w-16 h-16 rounded-full object-cover shadow-lg"
                   />
                 </div>
                 <div className="absolute -inset-2 bg-gradient-to-r from-teal-400/20 to-blue-400/20 rounded-full blur-lg -z-10"></div>
               </motion.div>
-              
+
               <motion.h1
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -257,7 +269,7 @@ const Register = () => {
               {/* Personal Information Section */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-white border-b border-white/20 pb-2">Personal Information</h3>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label htmlFor="firstName" className="block text-sm font-semibold text-white/90">
@@ -348,10 +360,25 @@ const Register = () => {
                 </div>
               </div>
 
+              {/* Profile Picture Upload */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-white border-b border-white/20 pb-2">Profile Picture</h3>
+                <p className="text-white/70 text-sm mb-4">Upload a profile picture for your account (optional). Your photo will be visible to other residents after it has been approved by the administrator.</p>
+
+                <div className="bg-white/10 rounded-lg p-6 backdrop-blur-sm">
+                  <div className="flex flex-col items-center">
+                    {/* ProfilePictureUpload component */}
+                    <div className="w-full max-w-md mx-auto">
+                      <ProfilePictureUpload onUploadComplete={handleProfilePictureUpload} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Account Security Section */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-white border-b border-white/20 pb-2">Account Security</h3>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label htmlFor="password" className="block text-sm font-semibold text-white/90">
@@ -417,7 +444,7 @@ const Register = () => {
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-white border-b border-white/20 pb-2">Directory Preferences</h3>
                 <p className="text-white/70 text-sm">Choose what information to share in the community directory</p>
-                
+
                 <div className="space-y-3">
                   <label className="flex items-center space-x-3 cursor-pointer">
                     <input
@@ -429,7 +456,7 @@ const Register = () => {
                     />
                     <span className="text-white text-sm">Include me in the community directory</span>
                   </label>
-                  
+
                   {formData.directoryOptIn && (
                     <div className="ml-8 space-y-2">
                       <label className="flex items-center space-x-3 cursor-pointer">
@@ -442,7 +469,7 @@ const Register = () => {
                         />
                         <span className="text-white/80 text-sm">Show email address</span>
                       </label>
-                      
+
                       <label className="flex items-center space-x-3 cursor-pointer">
                         <input
                           type="checkbox"
@@ -453,7 +480,7 @@ const Register = () => {
                         />
                         <span className="text-white/80 text-sm">Show phone number</span>
                       </label>
-                      
+
                       <label className="flex items-center space-x-3 cursor-pointer">
                         <input
                           type="checkbox"
@@ -473,7 +500,7 @@ const Register = () => {
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-white border-b border-white/20 pb-2">Ownership Verification</h3>
                 <p className="text-white/70 text-sm">Verify your ownership with the information from your registration email</p>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <label htmlFor="unitNumber" className="block text-sm font-semibold text-white/90">

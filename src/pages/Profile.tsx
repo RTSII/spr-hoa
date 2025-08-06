@@ -3,6 +3,8 @@ import { motion } from 'framer-motion'
 import { useForm } from 'react-hook-form'
 import { useAuth } from '@/contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
+import OwnerInbox from '../components/OwnerInbox'
+import ProfileCard from '@/components/ProfileCard'
 
 type ProfileFormData = {
   firstName: string
@@ -14,8 +16,6 @@ type ProfileFormData = {
   showPhone: boolean
   showUnit: boolean
 }
-
-import OwnerInbox from '../components/OwnerInbox';
 
 const Profile = () => {
   const { profile, updateProfile } = useAuth()
@@ -90,21 +90,22 @@ const Profile = () => {
   }
 
   return (
-    <>
-      <div className="space-y-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="glass-card p-8"
-        >
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-3xl font-display font-bold text-white">Profile Settings</h1>
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="text-white/70 hover:text-white"
-            >
-              ← Back to Dashboard
-            </button>
+    <div className="space-y-8">
+      {/* Profile Card with Picture */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="glass-card p-8"
+      >
+        <ProfileCard editable={true} />
+      </motion.div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="glass-card p-8"
+      >
+        <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-display font-bold text-white">Profile Settings</h1>
           <button
             onClick={() => navigate('/dashboard')}
@@ -127,7 +128,7 @@ const Profile = () => {
                 <input
                   {...register('firstName', { required: 'First name is required' })}
                   type="text"
-                  className="glass-input"
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400/50 focus:border-teal-400/50 transition-all duration-300 backdrop-blur-sm"
                 />
                 {errors.firstName && (
                   <p className="mt-1 text-sm text-red-400">{errors.firstName.message}</p>
@@ -141,7 +142,7 @@ const Profile = () => {
                 <input
                   {...register('lastName', { required: 'Last name is required' })}
                   type="text"
-                  className="glass-input"
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400/50 focus:border-teal-400/50 transition-all duration-300 backdrop-blur-sm"
                 />
                 {errors.lastName && (
                   <p className="mt-1 text-sm text-red-400">{errors.lastName.message}</p>
@@ -163,9 +164,8 @@ const Profile = () => {
                     }
                   })}
                   type="email"
-                  className={`glass-input pr-10 ${!errors.email && watch('email') ? 'border-green-400' : ''}`}
+                  className={`w-full px-4 py-3 pr-10 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400/50 focus:border-teal-400/50 transition-all duration-300 backdrop-blur-sm ${!errors.email && watch('email') ? 'border-green-400' : ''}`}
                 />
-                {/* Green checkmark for valid input */}
                 {!errors.email && watch('email') && (
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-400" title="Valid email">
                     ✓
@@ -190,10 +190,9 @@ const Profile = () => {
                     }
                   })}
                   type="tel"
-                  className={`glass-input pr-10 ${!errors.phone && watch('phone') ? 'border-green-400' : ''}`}
+                  className={`w-full px-4 py-3 pr-10 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400/50 focus:border-teal-400/50 transition-all duration-300 backdrop-blur-sm ${!errors.phone && watch('phone') ? 'border-green-400' : ''}`}
                   placeholder="(XXX) XXX-XXXX"
                 />
-                {/* Green checkmark for valid input */}
                 {!errors.phone && watch('phone') && (
                   <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-400" title="Valid phone">
                     ✓
@@ -218,7 +217,7 @@ const Profile = () => {
           {/* Directory Settings */}
           <div className="space-y-4 p-6 bg-white/10 rounded-lg">
             <h2 className="text-xl font-semibold text-white mb-2">Choose How You Appear in the Community Directory</h2>
-<p className="text-white/80 mb-4">You control what information is visible to other residents. Toggle each option below to decide what appears in the Directory. <span className="font-semibold">All options are off by default.</span></p>
+            <p className="text-white/80 mb-4">You control what information is visible to other residents. Toggle each option below to decide what appears in the Directory. <span className="font-semibold">All options are off by default.</span></p>
 
             <div className="flex items-center">
               <input
@@ -248,12 +247,6 @@ const Profile = () => {
                   />
                   <label className="ml-2 block text-sm text-white/80 flex items-center">
                     Show my unit number
-                    <span className="ml-1 cursor-pointer relative group">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-seafoam" fill="none" viewBox="0 0 24 24" stroke="currentColor"><title>Help</title><circle cx="12" cy="12" r="12" fill="#2953A6"/><text x="12" y="16" textAnchor="middle" fontSize="12" fill="#fff">?</text></svg>
-                      <span className="absolute left-1/2 z-10 -translate-x-1/2 mt-2 w-56 rounded-lg bg-[#2953A6] text-white text-xs px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                        If enabled, your unit number will be visible to other opted-in residents in the Directory.
-                      </span>
-                    </span>
                   </label>
                 </div>
 
@@ -265,12 +258,6 @@ const Profile = () => {
                   />
                   <label className="ml-2 block text-sm text-white/80 flex items-center">
                     Show my email address
-                    <span className="ml-1 cursor-pointer relative group">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-seafoam" fill="none" viewBox="0 0 24 24" stroke="currentColor"><title>Help</title><circle cx="12" cy="12" r="12" fill="#2953A6"/><text x="12" y="16" textAnchor="middle" fontSize="12" fill="#fff">?</text></svg>
-                      <span className="absolute left-1/2 z-10 -translate-x-1/2 mt-2 w-56 rounded-lg bg-[#2953A6] text-white text-xs px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                        If enabled, your email address will be visible to other opted-in residents in the Directory.
-                      </span>
-                    </span>
                   </label>
                 </div>
 
@@ -282,12 +269,6 @@ const Profile = () => {
                   />
                   <label className="ml-2 block text-sm text-white/80 flex items-center">
                     Show my phone number
-                    <span className="ml-1 cursor-pointer relative group">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-seafoam" fill="none" viewBox="0 0 24 24" stroke="currentColor"><title>Help</title><circle cx="12" cy="12" r="12" fill="#2953A6"/><text x="12" y="16" textAnchor="middle" fontSize="12" fill="#fff">?</text></svg>
-                      <span className="absolute left-1/2 z-10 -translate-x-1/2 mt-2 w-56 rounded-lg bg-[#2953A6] text-white text-xs px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                        If enabled, your phone number will be visible to other opted-in residents in the Directory.
-                      </span>
-                    </span>
                   </label>
                 </div>
               </motion.div>
@@ -328,17 +309,27 @@ const Profile = () => {
             <button
               type="submit"
               disabled={isLoading || !isDirty}
-              className={`glass-button ${(!isDirty || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`px-6 py-3 bg-gradient-to-r from-teal-500 to-blue-600 text-white font-semibold rounded-xl hover:from-teal-400 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50 transition-all duration-300 ${(!isDirty || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
               {isLoading ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </form>
       </motion.div>
+
+      {/* Messages Section */}
+      {profile?.user_id && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="glass-card p-8"
+        >
+          <h2 className="text-2xl font-bold text-white mb-6">My Messages</h2>
+          <OwnerInbox user_id={profile.user_id} />
+        </motion.div>
+      )}
     </div>
-    {profile?.user_id && <OwnerInbox user_id={profile.user_id} />}
-    </>
-  );
+  )
 }
 
-export default Profile;
+export default Profile

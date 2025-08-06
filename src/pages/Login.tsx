@@ -3,6 +3,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Eye, EyeOff, Mail, Lock, ArrowRight } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import aerialViewImg from '@/assets/images/aerial_view.jpg'
+import birdImg from '@/assets/images/bird.jpeg'
 
 const Login = () => {
   const navigate = useNavigate()
@@ -18,10 +20,22 @@ const Login = () => {
     setError('')
     setLoading(true)
 
+    console.log('Login attempt with:', email, password)
+
     try {
       await signIn(email, password)
-      navigate('/dashboard')
+      console.log('SignIn completed successfully')
+
+      // Check if this is the admin email and redirect appropriately
+      if (email === 'rtsii10@gmail.com') {
+        console.log('Redirecting to admin dashboard')
+        navigate('/admin')
+      } else {
+        console.log('Redirecting to regular dashboard')
+        navigate('/dashboard')
+      }
     } catch (err: any) {
+      console.error('Login error:', err)
       setError(err.message || 'Failed to sign in')
     } finally {
       setLoading(false)
@@ -53,7 +67,7 @@ const Login = () => {
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage: `url('/src/assets/images/aerial_view.jpg')`,
+          backgroundImage: `url('${aerialViewImg}')`,
         }}
       >
         <div className="absolute inset-0 bg-gradient-to-br from-blue-900/80 via-blue-800/70 to-teal-700/80"></div>
@@ -107,7 +121,7 @@ const Login = () => {
               >
                 <div className="w-24 h-24 mx-auto rounded-full bg-gradient-to-br from-white/20 to-white/5 border border-white/30 flex items-center justify-center backdrop-blur-sm">
                   <img
-                    src="/bird.jpeg"
+                    src={birdImg}
                     alt="Bird Logo"
                     className="w-16 h-16 rounded-full object-cover shadow-lg"
                   />

@@ -1,104 +1,153 @@
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
-import ProfileCard from '@/components/ProfileCard';
-import '@/components/ProfileCard.css';
-
+import jsPDF from 'jspdf'
+import html2canvas from 'html2canvas'
+import { Mail, Phone, Home, User, X } from 'lucide-react'
+import ReactBitsProfileCard from '@/components/ReactBitsProfileCard'
 
 type DirectoryEntry = {
-  id: string;
-  unit_number: string;
-  first_name: string;
-  last_name: string;
-  email: string;
-};
+  id: string
+  unit_number: string
+  first_name: string
+  last_name: string
+  email: string
+  phone?: string
+  profile_picture_url?: string
+  profile_picture_status?: string
+  show_email: boolean
+  show_phone: boolean
+  show_unit: boolean
+  directory_opt_in: boolean
+}
 
 const Directory = () => {
-  const { profile } = useAuth();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [buildingFilter, setBuildingFilter] = useState('');
-  const [supermemoryQuery, setSupermemoryQuery] = useState('');
-  const [supermemoryResults, setSupermemoryResults] = useState<any[]>([]);
-  const [residents, setResidents] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [accessDenied, setAccessDenied] = useState(false);
-  const [expandedResident, setExpandedResident] = useState<any | null>(null);
+  const { profile } = useAuth()
+  const [searchTerm, setSearchTerm] = useState('')
+  const [buildingFilter, setBuildingFilter] = useState('')
+  const [supermemoryQuery, setSupermemoryQuery] = useState('')
+  const [supermemoryResults, setSupermemoryResults] = useState<any[]>([])
+  const [residents, setResidents] = useState<DirectoryEntry[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [accessDenied, setAccessDenied] = useState(false)
+  const [expandedResident, setExpandedResident] = useState<DirectoryEntry | null>(null)
 
   // Helper to get preferred contact method
-  const getPreferredContact = (resident: any) => {
-    if (resident.show_email && resident.email) return resident.email;
-    if (resident.show_phone && resident.phone) return resident.phone;
-    return '';
-  };
+  const getPreferredContact = (resident: DirectoryEntry) => {
+    if (resident.show_email && resident.email) return resident.email
+    if (resident.show_phone && resident.phone) return resident.phone
+    return ''
+  }
 
   useEffect(() => {
     if (profile && !profile.directory_opt_in) {
-      setAccessDenied(true);
-      setIsLoading(false);
-      return;
+      setAccessDenied(true)
+      setIsLoading(false)
+      return
     }
-    fetchResidents();
-  }, [profile]);
+    fetchResidents()
+  }, [profile])
+
+  // Handle escape key to close expanded card
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && expandedResident) {
+        setExpandedResident(null)
+      }
+    }
+
+    if (expandedResident) {
+      document.addEventListener('keydown', handleEscape)
+      return () => document.removeEventListener('keydown', handleEscape)
+    }
+  }, [expandedResident])
 
   const fetchResidents = async () => {
     try {
       const { data, error } = await supabase
         .from('owner_profiles')
-        .select('*')
+        .select(`
+          id,
+          unit_number,
+          first_name,
+          last_name,
+          email,
+          phone,
+          profile_picture_url,
+          profile_picture_status,
+          show_email,
+          show_phone,
+          show_unit,
+          directory_opt_in
+        `)
         .eq('directory_opt_in', true)
-        .order('unit_number');
-      if (error) throw error;
-      setResidents(data || []);
+        .order('unit_number')
+
+      if (error) throw error
+      setResidents(data || [])
     } catch (error) {
-      console.error('Error fetching residents:', error);
+      console.error('Error fetching residents:', error)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const filteredResidents = residents.filter((resident) => {
-    const searchLower = searchTerm.toLowerCase();
-    const fullName = `${resident.first_name} ${resident.last_name}`.toLowerCase();
-    const unit = resident.unit_number.toLowerCase();
-    const building = resident.unit_number.charAt(0).toUpperCase();
-    const buildingMatch = buildingFilter ? building === buildingFilter : true;
-    return buildingMatch && (fullName.includes(searchLower) || unit.includes(searchLower));
-  });
+    const searchLower = searchTerm.toLowerCase()
+    const fullName = `${resident.first_name} ${resident.last_name}`.toLowerCase()
+    const unit = resident.unit_number.toLowerCase()
+    const building = resident.unit_number.charAt(0).toUpperCase()
+    const buildingMatch = buildingFilter ? building === buildingFilter : true
+    return buildingMatch && (fullName.includes(searchLower) || unit.includes(searchLower))
+  })
 
-  // Helper: get resident photo or shadow image
-  const getResidentPhoto = (resident: any) => {
+  // Helper: get resident photo or default avatar
+  const getResidentPhoto = (resident: DirectoryEntry) => {
     if (
-      resident.show_profile_photo &&
       resident.profile_picture_url &&
       resident.profile_picture_status === 'approved'
     ) {
-      return resident.profile_picture_url;
+      return resident.profile_picture_url
     }
-    return require('@/assets/images/shadow_profile.png'); // fallback shadow image
-  };
+    // Default avatar using UI Avatars service
+    return `https://ui-avatars.com/api/?name=${resident.first_name}+${resident.last_name}&background=2953A6&color=fff&size=256`
+  }
 
   const exportDirectoryPDF = async () => {
-    const element = document.getElementById('directory-list-pdf');
-    if (!element) return;
-    const canvas = await html2canvas(element, { backgroundColor: null, scale: 2 });
-    const imgData = canvas.toDataURL('image/png');
-    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' });
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const imgProps = pdf.getImageProperties(imgData);
-    const pdfWidth = pageWidth - 40;
-    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-    pdf.setFillColor('#2953A6');
-    pdf.rect(0, 0, pageWidth, 60, 'F');
-    pdf.setTextColor('#fff');
-    pdf.setFontSize(22);
-    pdf.text('Sandpiper Run Resident Directory', 40, 40);
-    pdf.addImage(imgData, 'PNG', 20, 70, pdfWidth, pdfHeight);
-    pdf.save(`sandpiper-run-directory-${new Date().toISOString().split('T')[0]}.pdf`);
-  };
+    const element = document.getElementById('directory-list-pdf')
+    if (!element) return
+    const canvas = await html2canvas(element, { backgroundColor: null, scale: 2 })
+    const imgData = canvas.toDataURL('image/png')
+    const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' })
+    const pageWidth = pdf.internal.pageSize.getWidth()
+    const pageHeight = pdf.internal.pageSize.getHeight()
+    const imgProps = pdf.getImageProperties(imgData)
+    const pdfWidth = pageWidth - 40
+    const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width
+    pdf.setFillColor('#2953A6')
+    pdf.rect(0, 0, pageWidth, 60, 'F')
+    pdf.setTextColor('#fff')
+    pdf.setFontSize(22)
+    pdf.text('Sandpiper Run Resident Directory', 40, 40)
+    pdf.addImage(imgData, 'PNG', 20, 70, pdfWidth, pdfHeight)
+    pdf.save(`sandpiper-run-directory-${new Date().toISOString().split('T')[0]}.pdf`)
+  }
+
+  const handleThumbnailClick = (resident: DirectoryEntry) => {
+    setExpandedResident(resident)
+  }
+
+  const handleContactClick = (resident: DirectoryEntry) => {
+    const contact = getPreferredContact(resident)
+    if (contact) {
+      if (contact.includes('@')) {
+        window.location.href = `mailto:${contact}`
+      } else {
+        window.location.href = `tel:${contact}`
+      }
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -111,20 +160,22 @@ const Directory = () => {
           <h1 className="text-3xl font-display font-bold text-white mb-4 md:mb-0">
             Resident Directory
           </h1>
-          <a
-            href="/profile"
-            className="glass-button ml-0 md:ml-4 mt-4 md:mt-0 text-base font-semibold px-6 py-2 rounded-lg shadow-lg bg-gradient-to-r from-[#2953A6] to-[#6bb7e3] text-white hover:from-[#1e3a6b] hover:to-[#4a90e2] focus:outline-none focus:ring-2 focus:ring-seafoam transition-all duration-200"
-            aria-label="Manage My Directory Profile"
-          >
-            Manage My Directory Profile
-          </a>
-          <button
-            onClick={exportDirectoryPDF}
-            className="glass-button text-sm"
-            disabled={filteredResidents.length === 0}
-          >
-            🖨️ Export Directory (PDF)
-          </button>
+          <div className="flex items-center space-x-4">
+            <a
+              href="/profile"
+              className="glass-button text-base font-semibold px-6 py-2 rounded-lg shadow-lg bg-gradient-to-r from-[#2953A6] to-[#6bb7e3] text-white hover:from-[#1e3a6b] hover:to-[#4a90e2] focus:outline-none focus:ring-2 focus:ring-seafoam transition-all duration-200"
+              aria-label="Manage My Directory Profile"
+            >
+              Manage My Directory Profile
+            </a>
+            <button
+              onClick={exportDirectoryPDF}
+              className="glass-button text-sm"
+              disabled={filteredResidents.length === 0}
+            >
+              🖨️ Export Directory (PDF)
+            </button>
+          </div>
         </div>
 
         {/* Opt-in Notice */}
@@ -170,14 +221,14 @@ const Directory = () => {
         <div className="mb-6">
           <form
             onSubmit={async (e) => {
-              e.preventDefault();
-              if (!supermemoryQuery) return;
-              const { supermemorySearch } = await import('../lib/supermemoryClient');
+              e.preventDefault()
+              if (!supermemoryQuery) return
+              const { supermemorySearch } = await import('../lib/supermemoryClient')
               try {
-                const result = await supermemorySearch(supermemoryQuery, 'resident-directory');
-                setSupermemoryResults(result?.results || []);
+                const result = await supermemorySearch(supermemoryQuery, 'resident-directory')
+                setSupermemoryResults(result?.results || [])
               } catch (err) {
-                setSupermemoryResults([]);
+                setSupermemoryResults([])
               }
             }}
             className="flex gap-2"
@@ -228,88 +279,91 @@ const Directory = () => {
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div id="directory-list-pdf" className="space-y-4">
             {filteredResidents.map((resident, index) => (
               <motion.div
                 key={resident.id}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="luxury-card p-8 rounded-2xl shadow-lg bg-gradient-to-br from-[#2953A6] via-white/10 to-[#6bb7e3] border-2 border-[#2953A6] hover:scale-[1.02] transition-transform duration-300"
+                className="luxury-card p-6 rounded-2xl shadow-lg bg-gradient-to-br from-[#2953A6] via-white/10 to-[#6bb7e3] border-2 border-[#2953A6] hover:scale-[1.02] transition-transform duration-300"
                 style={{ boxShadow: '0 4px 32px 0 rgba(41,83,166,0.12)' }}
               >
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                  {/* Resident Thumbnail (ProfileCard) */}
-                  <div className="flex-shrink-0 cursor-pointer" onClick={() => setExpandedResident(resident)}>
-                    <ProfileCard
+                <div className="flex items-center space-x-4">
+                  {/* ReactBits Profile Card Thumbnail */}
+                  <div
+                    className="flex-shrink-0 cursor-pointer transform hover:scale-105 transition-transform duration-200"
+                    onClick={() => handleThumbnailClick(resident)}
+                  >
+                    <ReactBitsProfileCard
                       avatarUrl={getResidentPhoto(resident)}
                       name={`${resident.first_name} ${resident.last_name}`}
+                      title={`Unit ${resident.unit_number}`}
                       handle={resident.unit_number}
-                      status={getPreferredContact(resident)}
+                      status={resident.profile_picture_status === 'approved' ? 'Verified' : 'Resident'}
+                      size="small"
+                      enableTilt={true}
                       showUserInfo={false}
-                      className="w-20 h-20"
-                      behindGradient={undefined}
-                      innerGradient={undefined}
-                      miniAvatarUrl={undefined}
-                      onContactClick={undefined}
+                      className="profile-thumbnail"
                     />
                   </div>
+
                   {/* Resident Info */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg font-semibold text-white">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="text-lg font-semibold text-white">
                         {resident.first_name} {resident.last_name}
-                      </span>
+                      </h3>
                       {/* Only show unit if opted-in */}
                       {resident.show_unit && (
-                        <span className="text-seafoam text-xs font-bold bg-white/10 px-2 py-1 rounded ml-2">
+                        <span className="text-seafoam text-xs font-bold bg-white/10 px-2 py-1 rounded">
                           Unit {resident.unit_number}
                         </span>
                       )}
                     </div>
-                    <div className="mt-2 flex flex-col gap-1">
+
+                    <div className="space-y-1">
                       {/* Only show email if opted-in */}
-                      {resident.show_email && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-white/80 text-sm">
+                      {resident.show_email && resident.email && (
+                        <div className="flex items-center gap-2 text-white/80 text-sm">
+                          <Mail className="h-4 w-4 text-seafoam" />
+                          <a href={`mailto:${resident.email}`} className="hover:text-seafoam transition-colors">
                             {resident.email}
-                          </span>
+                          </a>
                         </div>
                       )}
+
                       {/* Only show phone if opted-in and present */}
                       {resident.show_phone && resident.phone && (
-                        <div className="flex items-center gap-2">
-                          <span className="text-white/80 text-sm">
-                            {resident.phone}
-                          </span>
-                          <a href={`tel:${resident.phone}`} className="underline hover:text-[#6bb7e3]">
+                        <div className="flex items-center gap-2 text-white/80 text-sm">
+                          <Phone className="h-4 w-4 text-seafoam" />
+                          <a href={`tel:${resident.phone}`} className="hover:text-seafoam transition-colors">
                             {resident.phone}
                           </a>
                         </div>
                       )}
+
                       {!resident.show_email && !resident.show_phone && (
-                        <span className="text-white/60 italic" title="Contact info private">
-                          Contact info private
-                        </span>
+                        <div className="flex items-center gap-2 text-white/60 text-sm italic">
+                          <User className="h-4 w-4" />
+                          <span>Contact info private</span>
+                        </div>
                       )}
                     </div>
                   </div>
-                  {/* Privacy/Photo Status Icons */}
-                  <div className="flex flex-col items-end gap-2">
-                    {resident.show_profile_photo && resident.profile_picture_status === 'approved' ? (
-                      <span className="inline-flex items-center gap-1 text-[#6bb7e3] text-xs" title="Photo approved and shown">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                        Photo Shared
-                      </span>
+
+                  {/* Profile Picture Status */}
+                  <div className="flex-shrink-0">
+                    {resident.profile_picture_url && resident.profile_picture_status === 'approved' ? (
+                      <div className="flex items-center gap-1 text-green-400 text-xs">
+                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                        <span>Photo Verified</span>
+                      </div>
                     ) : (
-                      <span className="inline-flex items-center gap-1 text-white/50 text-xs" title="No photo shared or pending approval">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        No Photo
-                      </span>
+                      <div className="flex items-center gap-1 text-white/50 text-xs">
+                        <div className="w-2 h-2 bg-white/30 rounded-full"></div>
+                        <span>Default Avatar</span>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -321,52 +375,63 @@ const Directory = () => {
         {/* Privacy Notice */}
         <div className="mt-8 p-4 bg-white/5 rounded-lg">
           <p className="text-white/60 text-sm text-center">
-            This directory only shows residents who have opted in. Contact information is displayed based on individual privacy preferences.
+            This directory only shows residents who have opted in. Contact information and profile pictures are displayed based on individual privacy preferences.
           </p>
         </div>
       </motion.div>
-      {/* Expanded Resident Modal */}
-      {expandedResident && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm" onClick={() => setExpandedResident(null)}>
-          <div className="bg-[#101a2b] rounded-2xl shadow-2xl p-8 max-w-xs w-full relative" onClick={e => e.stopPropagation()}>
-            <button
-              className="absolute top-3 right-3 text-white/70 hover:text-white text-xl font-bold focus:outline-none"
-              onClick={() => setExpandedResident(null)}
-              aria-label="Close profile card"
-            >
-              &times;
-            </button>
-            <ProfileCard
-              avatarUrl={getResidentPhoto(expandedResident)}
-              name={`${expandedResident.first_name} ${expandedResident.last_name}`}
-              handle={expandedResident.unit_number}
-              status={getPreferredContact(expandedResident)}
-              showUserInfo={true}
-              className="w-44 h-44 mx-auto"
-              behindGradient={undefined}
-              innerGradient={undefined}
-              miniAvatarUrl={undefined}
-              onContactClick={undefined}
-            />
-            <div className="mt-6 text-center">
-              <div className="text-lg font-semibold text-white">{expandedResident.first_name} {expandedResident.last_name}</div>
-              {getPreferredContact(expandedResident) ? (
-                <div className="mt-2 text-seafoam text-base font-medium">
-                  {expandedResident.show_email && expandedResident.email ? (
-                    <a href={`mailto:${expandedResident.email}`}>{expandedResident.email}</a>
-                  ) : expandedResident.show_phone && expandedResident.phone ? (
-                    <a href={`tel:${expandedResident.phone}`}>{expandedResident.phone}</a>
-                  ) : null}
-                </div>
-              ) : (
-                <div className="mt-2 text-white/60 italic text-base">No public contact info</div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
 
-export default Directory;
+      {/* Expanded Profile Card Modal */}
+      <AnimatePresence>
+        {expandedResident && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setExpandedResident(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="relative"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close button */}
+              <button
+                onClick={() => setExpandedResident(null)}
+                className="absolute -top-4 -right-4 w-8 h-8 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors z-10"
+              >
+                <X className="h-4 w-4" />
+              </button>
+
+              {/* Expanded Profile Card */}
+              <ReactBitsProfileCard
+                avatarUrl={getResidentPhoto(expandedResident)}
+                name={`${expandedResident.first_name} ${expandedResident.last_name}`}
+                title={`Resident • Unit ${expandedResident.unit_number}`}
+                handle={expandedResident.unit_number}
+                status={getPreferredContact(expandedResident) || 'Contact info private'}
+                contactText="Contact"
+                size="large"
+                enableTilt={true}
+                showUserInfo={true}
+                onContactClick={() => handleContactClick(expandedResident)}
+                behindGradient="radial-gradient(farthest-side circle at var(--pointer-x) var(--pointer-y),hsla(41,100%,90%,var(--card-opacity)) 4%,hsla(41,50%,80%,calc(var(--card-opacity)*0.75)) 10%,hsla(41,25%,70%,calc(var(--card-opacity)*0.5)) 50%,hsla(41,0%,60%,0) 100%),radial-gradient(35% 52% at 55% 20%,#2953A6c4 0%,#073aff00 100%),radial-gradient(100% 100% at 50% 50%,#6bb7e3ff 1%,#073aff00 76%),conic-gradient(from 124deg at 50% 50%,#2953A6ff 0%,#6bb7e3ff 40%,#6bb7e3ff 60%,#2953A6ff 100%)"
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <style jsx>{`
+        .profile-thumbnail {
+          border-radius: 1rem;
+          box-shadow: 0 8px 32px rgba(41, 83, 166, 0.3);
+        }
+      `}</style>
+    </div>
+  )
+}
+
+export default Directory
