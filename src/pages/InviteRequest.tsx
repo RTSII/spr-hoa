@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight, AlertCircle, User, Home, Mail, Calendar, CheckCircle } from 'lucide-react'
+import { storeInviteRequest, searchInviteRequests } from '../lib/supermemory'
 
 const InviteRequest = () => {
   const [formData, setFormData] = useState({
@@ -14,6 +15,11 @@ const InviteRequest = () => {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
+
+  // Supermemory.ai search state
+  const [supermemoryQuery, setSupermemoryQuery] = useState('')
+  const [supermemoryResults, setSupermemoryResults] = useState<any[]>([])
+  const [searching, setSearching] = useState(false)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -64,6 +70,15 @@ const InviteRequest = () => {
       // In production, you'd integrate with your email service
       console.log('Invite request would be sent to rob@ursllc.com:', emailData)
       await new Promise(resolve => setTimeout(resolve, 2000))
+
+      // Store invite request in Supermemory.ai
+      await storeInviteRequest({
+        name: formData.name,
+        unitNumber: formData.unitNumber,
+        purchaseDate: formData.purchaseDate,
+        email: formData.email,
+        timestamp: new Date().toISOString()
+      })
       
       setSuccessMessage('Your invite request has been submitted successfully! We will review your information and send you a registration link if approved.')
       
@@ -82,6 +97,21 @@ const InviteRequest = () => {
       setLoading(false)
     }
   }
+
+  const handleSearch = async () => {
+    if (!supermemoryQuery.trim()) return;
+    
+    setSearching(true);
+    try {
+      const results = await searchInviteRequests(supermemoryQuery);
+      setSupermemoryResults(results || []);
+    } catch (err) {
+      console.error('Supermemory search failed:', err);
+      setSupermemoryResults([]);
+    } finally {
+      setSearching(false);
+    }
+  };
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -337,8 +367,6 @@ const InviteRequest = () => {
                   <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
                 </Link>
               </div>
-            </motion.div>
-          </div>
 
           {/* Decorative bottom element */}
           <motion.div
@@ -348,8 +376,54 @@ const InviteRequest = () => {
             className="mt-8 text-center"
           >
             <p className="text-white/60 text-sm">
-              © 2025 PM-Shift Pool Guy
+              &copy; 2025 PM-Shift Pool Guy
             </p>
+          </motion.div>
+
+          {/* Supermemory.ai Search Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative z-10 glass-card p-8 max-w-md w-full mx-auto text-center"
+          >
+            <h1 className="text-4xl font-bold text-white mb-2">Request Invite</h1>
+            <p className="text-white/80 mb-8">Fill out your information to request access to the Sandpiper Run community portal.</p>
+            
+            {/* Supermemory.ai Search Section */}
+            <div className="mb-8 p-4 bg-white/10 rounded-lg border border-white/20">
+              <h2 className="text-xl font-semibold text-white mb-3">Search Invite Requests</h2>
+              <p className="text-white/70 text-sm mb-4">As admin, search through all invite requests using natural language queries.</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={supermemoryQuery}
+                  onChange={(e) => setSupermemoryQuery(e.target.value)}
+                  placeholder="Search invites (e.g., 'requests from last week', 'unit 101 invites')"
+                  className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
+                />
+                <button
+                  onClick={handleSearch}
+                  disabled={searching}
+                  className="px-4 py-2 bg-gradient-to-r from-teal-500 to-blue-600 text-white rounded hover:from-teal-400 hover:to-blue-500 transition-all disabled:opacity-50"
+                >
+                  {searching ? 'Searching...' : 'Search'}
+                </button>
+              </div>
+              
+              {supermemoryResults.length > 0 && (
+                <div className="mt-4 text-left">
+                  <h3 className="font-medium text-white mb-2">Search Results:</h3>
+                  <div className="space-y-2 max-h-40 overflow-y-auto">
+                    {supermemoryResults.map((result, index) => (
+                      <div key={index} className="p-2 bg-white/5 border border-white/10 rounded">
+                        <div className="text-white text-sm">{result.content}</div>
+                        <div className="text-xs text-white/60 mt-1">Score: {result.score}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </motion.div>
         </motion.div>
       </div>

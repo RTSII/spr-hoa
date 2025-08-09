@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import ProfilePictureUpload from '../components/ProfilePictureUpload';
+import { storeProfileSettings, searchProfileSettings } from '../lib/supermemory';
 
 interface ProfileData {
   first_name: string;
@@ -28,11 +29,13 @@ const ProfileSettings: React.FC = () => {
     directory_opt_in: false,
     show_email: false,
     show_phone: false,
-    show_unit: true,
+    show_unit: false,
     receive_alerts: false,
     profile_picture_url: '',
     profile_picture_status: 'idle'
   });
+  const [supermemoryQuery, setSupermemoryQuery] = useState('');
+  const [supermemoryResults, setSupermemoryResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
@@ -63,11 +66,13 @@ const ProfileSettings: React.FC = () => {
   };
 
   const handleSave = async () => {
+    if (!user) return;
+    
+    setSaving(true);
+    setMessage('');
+    
     try {
-      setSaving(true);
-      setMessage('');
-
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('owner_profiles')
         .update({
           first_name: profile.first_name,
@@ -78,17 +83,34 @@ const ProfileSettings: React.FC = () => {
           show_email: profile.show_email,
           show_phone: profile.show_phone,
           show_unit: profile.show_unit,
-          receive_alerts: profile.receive_alerts ?? false
+          receive_alerts: profile.receive_alerts
         })
-        .eq('user_id', user?.id);
-
+        .eq('user_id', user.id);
+        
       if (error) throw error;
-
-      setMessage('Profile updated successfully!');
+      
+      // Store profile settings in Supermemory.ai
+      try {
+        await storeProfileSettings({
+          userId: user.id,
+          firstName: profile.first_name,
+          lastName: profile.last_name,
+          email: profile.email,
+          phone: profile.phone,
+          directoryOptIn: profile.directory_opt_in,
+          showEmail: profile.show_email,
+          showPhone: profile.show_phone,
+          showUnit: profile.show_unit,
+          receiveAlerts: profile.receive_alerts
+        });
+      } catch (smErr) {
+        console.warn('Supermemory store failed:', smErr);
+      }
+      
+      setMessage('Settings saved successfully!');
       setTimeout(() => setMessage(''), 3000);
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      setMessage('Error updating profile. Please try again.');
+    } catch (error: any) {
+      setMessage(`Error saving settings: ${error.message}`);
     } finally {
       setSaving(false);
     }
@@ -268,8 +290,84 @@ const ProfileSettings: React.FC = () => {
           </div>
         </div>
 
+        <div className="mt-6 glass-card p-4 animate-fadeInUp">
+          <div className="flex items-center justify-between">
+            <label className="font-medium text-white flex items-center">
+              Receive Community Alerts
+            </label>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-white mb-2">
+                Receive Community Alerts
+              </label>
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  checked={profile.receive_alerts}
+                  onChange={(e) => setProfile({ ...profile, receive_alerts: e.target.checked })}
+                  className="h-4 w-4 text-seafoam focus:ring-seafoam border-white/30 rounded bg-white/10"
+                />
+                <span className="ml-2 text-white/80 text-sm">Get notified about community alerts</span>
+              </div>
+            </div>
+
+            {/* Supermemory.ai Search Section */}
+            <div className="mt-8 p-4 bg-white/10 rounded-lg">
+              <h3 className="text-lg font-semibold text-white mb-2">Search Profile Settings with AI</h3>
+              <p className="text-sm text-white/70 mb-3">As admin, search through all profile settings using natural language queries.</p>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={supermemoryQuery}
+                  onChange={(e) => setSupermemoryQuery(e.target.value)}
+                  placeholder="Search settings (e.g., 'users with alerts enabled', 'profiles with phone visible')"
+                  className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-md text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-seafoam/50"
+                />
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!supermemoryQuery.trim()) return;
+                    try {
+                      const results = await searchProfileSettings(supermemoryQuery);
+                      setSupermemoryResults(results?.results || []);
+                    } catch (err) {
+                      console.error('Supermemory search failed:', err);
+                      setSupermemoryResults([]);
+                    }
+                  }}
+                  className="px-4 py-2 bg-gradient-to-r from-teal-500 to-blue-600 text-white rounded-md hover:from-teal-400 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
+                >
+                  Search
+                </button>
+              </div>
+              
+              {supermemoryResults.length > 0 && (
+                <div className="mt-4">
+                  <h4 className="font-medium text-white mb-2">Search Results:</h4>
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {supermemoryResults.map((result, index) => (
+                      <div key={index} className="p-3 bg-white/10 border border-white/20 rounded-md">
+                        <div className="font-medium text-white">{result.content.split('\n')[0]}</div>
+                        <div className="text-sm text-white/80">{result.content.split('\n')[1]}</div>
+                        <div className="text-xs text-white/60 mt-1">Score: {result.score}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
         <div className="mt-6 p-4 glass-card animate-fadeInUp">
-  <h3 className="font-medium text-white mb-2">Directory Preview</h3>
+          <h3 className="font-medium text-white mb-2">Directory Preview</h3>
+          <div className="text-sm text-white/80 space-y-1">
+            <p><strong>Name:</strong> {profile.first_name} {profile.last_name}</p>
+            {profile.directory_opt_in && profile.show_unit && <p><strong>Unit:</strong> {profile.unit_number}</p>}
+            {profile.directory_opt_in && profile.show_email && <p><strong>Email:</strong> {profile.email}</p>}
+            {profile.directory_opt_in && profile.show_phone && <p><strong>Phone:</strong> {profile.phone}</p>}
+            {!profile.directory_opt_in && <p className="text-white/50 italic">Not included in directory</p>}
+          </div>
+        </div>
   <div className="text-sm text-white/80 space-y-1">
     <p><strong>Name:</strong> {profile.first_name} {profile.last_name}</p>
     {profile.directory_opt_in && profile.show_unit && <p><strong>Unit:</strong> {profile.unit_number}</p>}

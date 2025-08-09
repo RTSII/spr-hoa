@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import OwnerInbox from '../components/OwnerInbox'
 import ProfileCard from '@/components/ProfileCard'
+import { storeProfileData, searchProfiles } from '@/lib/supermemory'
 
 type ProfileFormData = {
   firstName: string
@@ -23,6 +24,8 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const [error, setError] = useState('')
+  const [supermemoryQuery, setSupermemoryQuery] = useState('')
+  const [supermemoryResults, setSupermemoryResults] = useState<any[]>([])
 
   const {
     register,
@@ -48,7 +51,7 @@ const Profile = () => {
     setIsLoading(true)
     setError('')
     setSuccessMessage('')
-
+    
     try {
       await updateProfile({
         first_name: data.firstName,
@@ -56,10 +59,28 @@ const Profile = () => {
         email: data.email,
         phone: data.phone,
         directory_opt_in: data.directoryOptIn,
-        show_email: data.directoryOptIn ? data.showEmail : false,
-        show_phone: data.directoryOptIn ? data.showPhone : false,
-        show_unit: data.directoryOptIn ? data.showUnit : true
+        show_email: data.showEmail,
+        show_phone: data.showPhone,
+        show_unit: data.showUnit
       })
+      
+      // Store profile data in Supermemory.ai
+      try {
+        await storeProfileData({
+          userId: profile?.id || '',
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          phone: data.phone,
+          directoryOptIn: data.directoryOptIn,
+          showEmail: data.showEmail,
+          showPhone: data.showPhone,
+          showUnit: data.showUnit
+        });
+      } catch (smErr) {
+        console.warn('Supermemory store failed:', smErr);
+      }
+      
       setSuccessMessage('Profile updated successfully!')
       setTimeout(() => setSuccessMessage(''), 3000)
     } catch (err: any) {
@@ -328,6 +349,56 @@ const Profile = () => {
           <OwnerInbox user_id={profile.user_id} />
         </motion.div>
       )}
+
+      {/* Supermemory.ai Search Section */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="glass-card p-8 mt-6"
+      >
+        <h2 className="text-2xl font-bold text-white mb-6">Search Profiles with AI</h2>
+        <p className="text-white/80 mb-4">As admin, search through all profile updates and changes using natural language queries.</p>
+        <div className="flex gap-2 mb-4">
+          <input
+            type="text"
+            value={supermemoryQuery}
+            onChange={(e) => setSupermemoryQuery(e.target.value)}
+            placeholder="Search profiles (e.g., 'users who changed phone numbers', 'profiles updated last week')"
+            className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
+          />
+          <button
+            type="button"
+            onClick={async () => {
+              if (!supermemoryQuery.trim()) return;
+              try {
+                const results = await searchProfiles(supermemoryQuery);
+                setSupermemoryResults(results?.results || []);
+              } catch (err) {
+                console.error('Supermemory search failed:', err);
+                setSupermemoryResults([]);
+              }
+            }}
+            className="px-4 py-2 bg-gradient-to-r from-teal-500 to-blue-600 text-white rounded-lg hover:from-teal-400 hover:to-blue-500 transition-all focus:outline-none focus:ring-2 focus:ring-teal-400/50"
+          >
+            Search
+          </button>
+        </div>
+        
+        {supermemoryResults.length > 0 && (
+          <div>
+            <h3 className="font-medium text-white mb-2">Search Results:</h3>
+            <div className="space-y-2 max-h-60 overflow-y-auto">
+              {supermemoryResults.map((result, index) => (
+                <div key={index} className="p-3 bg-white/10 border border-white/20 rounded-lg">
+                  <div className="font-medium text-white">{result.content.split('\n')[0]}</div>
+                  <div className="text-sm text-white/80">{result.content.split('\n')[1]}</div>
+                  <div className="text-xs text-white/60 mt-1">Score: {result.score}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </motion.div>
     </div>
   )
 }

@@ -4,12 +4,18 @@ A premium web portal exclusively for owners at Sandpiper Run, a luxury oceanfron
 
 ## Features
 
-**2025-07-28 Update:**
+**2025-08-09 Update:**
 - All critical TypeScript and React lint errors are now resolved in ProfileCard, Directory, OwnerInbox, and related files
 - The luxury ProfileCard thumbnail and expanded modal are fully integrated and error-free in the Resident Directory
 - The codebase is ready for production, documentation updates, and onboarding flow finalization
 - Directory and Inbox are fully functional and luxury-branded
 - The project uses a solo admin model for maximum control and privacy-first resident directory controls
+- Integrated Supermemory.ai AI-powered search across all major site components:
+  - Profile.tsx: Search user profile changes/history and audit logs
+  - ProfileSettings.tsx: Search profile setting changes and preferences
+  - DevPortal.tsx: Search developer/admin actions, site configuration changes, and system logs
+  - InviteRequest.tsx: Search invite requests
+  - AdminDashboardMagicBento.tsx: Search admin dashboard events
 - See DEV_SERVER_TROUBLESHOOTING.md for troubleshooting
 
 ---

@@ -12,8 +12,10 @@ import {
   Eye,
   FileText,
   Newspaper,
-  LayoutTemplate
+  LayoutTemplate,
+  Search
 } from 'lucide-react';
+import { searchAdminDashboardEvents } from '@/lib/supermemory';
 import { useAuth } from '@/contexts/AuthContext';
 import AdminMessaging from '@/components/AdminMessaging';
 import AdminEmailSystem from '@/components/AdminEmailSystem';
@@ -27,6 +29,26 @@ type AdminTab = 'overview' | 'messaging' | 'news' | 'photos' | 'users' | 'settin
 const AdminDashboardMagicBento: React.FC = () => {
   const { user, isAdmin } = useAuth();
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
+  
+  // Supermemory.ai search state
+  const [supermemoryQuery, setSupermemoryQuery] = useState('');
+  const [supermemoryResults, setSupermemoryResults] = useState<any[]>([]);
+  const [searching, setSearching] = useState(false);
+
+  const handleAdminSearch = async () => {
+    if (!supermemoryQuery.trim()) return;
+    
+    setSearching(true);
+    try {
+      const results = await searchAdminDashboardEvents(supermemoryQuery);
+      setSupermemoryResults(results || []);
+    } catch (err) {
+      console.error('Supermemory admin search failed:', err);
+      setSupermemoryResults([]);
+    } finally {
+      setSearching(false);
+    }
+  };
 
   // Redirect if not admin
   if (!isAdmin) {
