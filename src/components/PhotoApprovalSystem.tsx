@@ -6,25 +6,17 @@ import {
   XCircle,
   Eye,
   User,
-  Calendar,
-  Tag,
-  MessageSquare,
   Search,
-  Filter,
-  MoreVertical,
-  Download,
-  Trash2,
   AlertCircle,
   UserCircle,
-  Image as ImageIcon,
+  ImageIcon,
   Home,
-  Inbox,
   RefreshCw,
-  SlidersHorizontal,
   FileImage
 } from 'lucide-react'
 import { adminService, PhotoSubmission } from '@/lib/adminService'
 import { supabase } from '@/lib/supabase'
+import { searchPhotos, storePhotoMetadata } from '@/lib/supermemory'
 
 interface PhotoApprovalSystemProps {
   onClose: () => void
@@ -48,6 +40,12 @@ const PhotoApprovalSystem: React.FC<PhotoApprovalSystemProps> = ({ onClose }) =>
   const [typeFilter, setTypeFilter] = useState<'all' | 'community' | 'profile'>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [loading, setLoading] = useState(false)
+  const [categories, setCategories] = useState<string[]>(['community', 'events', 'amenities', 'profile'])
+  const [newCategory, setNewCategory] = useState('')
+  const [showCategoryForm, setShowCategoryForm] = useState(false)
+  const [newCategoryName, setNewCategoryName] = useState('')
+  const [supermemoryQuery, setSupermemoryQuery] = useState('')
+  const [supermemoryResults, setSupermemoryResults] = useState<any[]>([])
   const [viewingPhoto, setViewingPhoto] = useState<EnhancedPhotoSubmission | null>(null)
   const [rejectionReason, setRejectionReason] = useState('')
   const [adminNotes, setAdminNotes] = useState('')
@@ -63,6 +61,36 @@ const PhotoApprovalSystem: React.FC<PhotoApprovalSystemProps> = ({ onClose }) =>
   // Image zoom functionality
   const [zoomLevel, setZoomLevel] = useState(1)
   const imageRef = useRef<HTMLImageElement>(null)
+
+  // Fetch unique categories from photo submissions
+  useEffect(() => {
+    const fetchCategories = async () => {
+      // First try to fetch from dedicated categories table
+      const { data: categoryData, error: categoryError } = await supabase
+        .from('photo_categories')
+        .select('category_name')
+        .order('created_at', { ascending: true });
+      
+      if (!categoryError && categoryData && categoryData.length > 0) {
+        // Use categories from dedicated table
+        const categoryNames = categoryData.map(item => item.category_name) as string[];
+        setCategories(categoryNames);
+      } else {
+        // Fallback to unique categories from photo submissions
+        const { data, error } = await supabase
+          .from('photo_submissions')
+          .select('category')
+          .neq('category', null);
+        
+        if (!error && data) {
+          const uniqueCategories = Array.from(new Set(data.map(item => item.category))) as string[];
+          setCategories(uniqueCategories);
+        }
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   // For profile photo review - we'll also check pending profile pictures
   const getProfilePhotos = async () => {
@@ -158,6 +186,15 @@ const PhotoApprovalSystem: React.FC<PhotoApprovalSystemProps> = ({ onClose }) =>
         allPhotos = allPhotos.filter(photo => photo.submission_type === typeFilter)
       }
 
+      // Apply search filter
+      if (searchTerm) {
+        allPhotos = allPhotos.filter(photo => 
+          photo.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          photo.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          photo.category?.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      }
+
       // Calculate stats
       const newStats = {
         total: communityPhotos.length + profilePhotos.length,
@@ -176,6 +213,38 @@ const PhotoApprovalSystem: React.FC<PhotoApprovalSystemProps> = ({ onClose }) =>
       setLoading(false)
     }
   }
+
+  const handleAddCategory = async () => {
+    if (!newCategory.trim()) return;
+    
+    try {
+      setLoading(true);
+      
+      // Save the new category to the database
+      const { error } = await supabase
+        .from('photo_categories')
+        .insert({
+          category_name: newCategory.trim(),
+          created_at: new Date().toISOString()
+        });
+      
+      if (error) throw error;
+      
+      // Add the new category to our local state
+      const updatedCategories = [...categories, newCategory.trim()];
+      setCategories(updatedCategories);
+      setNewCategory('');
+      setShowCategoryForm(false);
+      
+      console.log('New category added:', newCategory.trim());
+    } catch (error) {
+      console.error('Error adding category:', error);
+      // Show error to user
+      alert('Error adding category: ' + (error as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleApprove = async (submission: EnhancedPhotoSubmission) => {
     try {
@@ -326,6 +395,56 @@ const PhotoApprovalSystem: React.FC<PhotoApprovalSystemProps> = ({ onClose }) =>
     }
   }
 
+  const handleSupermemorySearch = async () => {
+    try {
+      if (!supermemoryQuery) return;
+      const results = await searchPhotos(supermemoryQuery);
+      setSupermemoryResults(results?.results || []);
+    } catch (error) {
+      console.error('Supermemory search error:', error);
+      setSupermemoryResults([]);
+    }
+  };
+
+  // Store photo metadata in Supermemory when approving
+  const storePhotoInSupermemory = async (photo: EnhancedPhotoSubmission) => {
+    try {
+      await storePhotoMetadata({
+        title: photo.title || 'Untitled Photo',
+        description: photo.description || '',
+        category: photo.category || 'uncategorized',
+        photoUrl: photo.file_url || '',
+        userId: photo.user_id || '',
+        status: photo.status
+      });
+    } catch (error) {
+      console.error('Error storing photo in Supermemory:', error);
+    }
+  };
+
+  const handleApprovePhoto = async (photoId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('photo_submissions')
+        .update({ status: 'approved' })
+        .eq('id', photoId)
+        .select()
+
+      if (error) throw error
+      
+      // Find the approved photo to store in Supermemory
+      const approvedPhoto = submissions.find(photo => photo.id === photoId);
+      if (approvedPhoto) {
+        await storePhotoInSupermemory(approvedPhoto);
+      }
+
+      loadSubmissions()
+    } catch (error) {
+      console.error('Error approving photo:', error)
+      alert('Error approving photo: ' + (error as Error).message)
+    }
+  }
+
   const filteredSubmissions = submissions.filter(submission =>
     submission.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     submission.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -461,6 +580,60 @@ const PhotoApprovalSystem: React.FC<PhotoApprovalSystemProps> = ({ onClose }) =>
                 <span>Rejected</span>
               </button>
             </div>
+          </div>
+
+          {/* Category Management Section */}
+          <div className="bg-black/20 rounded-lg border border-white/10 p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-white font-medium">Photo Categories (Albums)</h3>
+              <button 
+                onClick={() => setShowCategoryForm(!showCategoryForm)}
+                className="px-3 py-1 bg-orange-500/20 text-orange-400 rounded border border-orange-500/30 hover:bg-orange-500/30 transition-all text-sm"
+              >
+                {showCategoryForm ? 'Cancel' : 'Add Category'}
+              </button>
+            </div>
+            
+            {/* Category List */}
+            <div className="flex flex-wrap gap-2 mb-3">
+              {categories.map((category) => (
+                <span 
+                  key={category} 
+                  className="px-3 py-1 bg-white/10 text-white rounded-full text-sm"
+                >
+                  {category}
+                </span>
+              ))}
+            </div>
+            
+            {/* Add Category Form */}
+            <AnimatePresence>
+              {showCategoryForm && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="flex items-center space-x-2 mt-3">
+                    <input
+                      type="text"
+                      value={newCategory}
+                      onChange={(e) => setNewCategory(e.target.value)}
+                      className="flex-1 px-3 py-2 bg-black/30 border border-white/20 rounded-lg text-white placeholder-white/50 focus:border-orange-400 focus:outline-none"
+                      placeholder="Enter new category name"
+                    />
+                    <button 
+                      onClick={handleAddCategory}
+                      disabled={!newCategory.trim()}
+                      className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Add
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Search */}

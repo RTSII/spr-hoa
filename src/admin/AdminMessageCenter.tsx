@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { motion } from 'framer-motion';
+import { storeAdminMessage } from '../lib/supermemory';
 
 // Helper to extract building from unit number (e.g., B2G -> B)
 function getBuilding(unitNumber: string) {

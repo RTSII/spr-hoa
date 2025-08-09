@@ -1,10 +1,11 @@
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
-import { Camera, Upload, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
+import { Camera, Upload, CheckCircle, XCircle, AlertTriangle, Search } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import PhotoGalleryUpload from '@/components/PhotoGalleryUpload'
 import CircularGallery from '@/components/CircularGallery'
+import { searchPhotos } from '@/lib/supermemory'
 
 interface Photo {
   id: string
@@ -31,6 +32,8 @@ const Photos = () => {
   const [userPhotos, setUserPhotos] = useState<Photo[]>([])
   const [loading, setLoading] = useState(true)
   const [showUploadForm, setShowUploadForm] = useState(false)
+  const [supermemoryQuery, setSupermemoryQuery] = useState('')
+  const [supermemoryResults, setSupermemoryResults] = useState<any[]>([])
 
   useEffect(() => {
     fetchApprovedPhotos()
@@ -38,6 +41,17 @@ const Photos = () => {
       fetchUserPhotos()
     }
   }, [user])
+
+  const handleSupermemorySearch = async () => {
+    try {
+      if (!supermemoryQuery) return;
+      const results = await searchPhotos(supermemoryQuery);
+      setSupermemoryResults(results?.results || []);
+    } catch (error) {
+      console.error('Supermemory search error:', error);
+      setSupermemoryResults([]);
+    }
+  };
 
   const fetchApprovedPhotos = async () => {
     try {
@@ -49,20 +63,10 @@ const Photos = () => {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-
-      if (data) {
-        setApprovedPhotos(data.map(item => ({
-          id: item.id,
-          title: item.title,
-          description: item.description,
-          photo_url: item.file_url || item.photo_url,
-          category: item.category,
-          status: item.status,
-          created_at: item.created_at
-        })))
-      }
+      setApprovedPhotos(data || [])
     } catch (error) {
       console.error('Error fetching approved photos:', error)
+      setApprovedPhotos([])
     } finally {
       setLoading(false)
     }

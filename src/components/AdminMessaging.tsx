@@ -14,7 +14,7 @@ import {
   AlertTriangle,
   CheckCircle,
   Plus,
-  Template,
+  LayoutTemplate,
   Eye,
   Trash2
 } from 'lucide-react';
@@ -283,7 +283,7 @@ const AdminMessaging: React.FC = () => {
           onClick={() => setShowTemplates(!showTemplates)}
           className="flex items-center space-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors"
         >
-          <Template className="h-4 w-4" />
+          <LayoutTemplate className="h-4 w-4" />
           <span>Templates</span>
         </button>
       </div>

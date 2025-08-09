@@ -51,3 +51,55 @@ export async function searchAdminMessages(query: string) {
     return [];
   }
 }
+
+export async function storePhotoMetadata({ title, description, category, photoUrl, userId, status }: {
+  title: string;
+  description?: string;
+  category: string;
+  photoUrl: string;
+  userId: string;
+  status: string;
+}) {
+  try {
+    const response = await axios.post(
+      SUPERMEMORY_URL + '/memory',
+      {
+        content: `Photo | ${title}\n${description || ''}\nCategory: ${category} | Status: ${status} | Uploaded by: ${userId}\nPhoto URL: ${photoUrl}`,
+        tags: ['hoa', 'photo', category, status],
+        metadata: { title, description, category, photoUrl, userId, status },
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${SUPERMEMORY_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Supermemory photo store error:', error);
+    return null;
+  }
+}
+
+export async function searchPhotos(query: string, category?: string) {
+  try {
+    const tags = ['hoa', 'photo'];
+    if (category) tags.push(category);
+    
+    const response = await axios.post(
+      SUPERMEMORY_URL + '/search',
+      { query, tags },
+      {
+        headers: {
+          'Authorization': `Bearer ${SUPERMEMORY_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Supermemory photo search error:', error);
+    return [];
+  }
+}

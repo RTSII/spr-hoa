@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { storePhotoMetadata } from '../lib/supermemory';
 
 interface PhotoGalleryUploadProps {
   onUploadComplete: () => void;
@@ -48,28 +49,43 @@ const PhotoGalleryUpload: React.FC<PhotoGalleryUploadProps> = ({ onUploadComplet
         .from('photos')
         .getPublicUrl(filePath);
 
-      // Create submission record (pending approval)
-      const { error: submissionError } = await supabase
+      // Insert record into photo_submissions table
+      const { data, error: insertError } = await supabase
         .from('photo_submissions')
-        .insert({
-          user_id: user?.id,
-          photo_url: publicUrl,
-          title: title.trim(),
-          description: description.trim(),
-          submission_type: 'gallery_photo',
+        .insert([
+          {
+            user_id: user?.id,
+            title,
+            description,
+            file_path: filePath,
+            photo_url: publicUrl,
+            category: 'community',
+            status: 'pending'
+          }
+        ])
+        .select();
+
+      if (insertError) throw insertError;
+
+      // Store photo metadata in Supermemory.ai
+      if (data && data.length > 0) {
+        const photoId = data[0].id;
+        await storePhotoMetadata({
+          title,
+          description,
+          category: 'community',
+          photoUrl: publicUrl,
+          userId: user?.id || '',
           status: 'pending'
         });
-
-      if (submissionError) throw submissionError;
+      }
 
       setUploadStatus('pending');
-      setTitle('');
-      setDescription('');
       onUploadComplete();
-
     } catch (error) {
       console.error('Error uploading photo:', error);
-      alert('Error uploading photo. Please try again.');
+      alert('Error uploading photo: ' + (error as Error).message);
+      setUploadStatus('idle');
     } finally {
       setUploading(false);
     }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, ZoomIn, ChevronLeft, ChevronRight } from 'lucide-react';
+import { X, ZoomIn, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import { searchPhotos } from '../lib/supermemory';
 
 interface GalleryItem {
   id: string;
@@ -37,6 +38,8 @@ const CircularGallery: React.FC<CircularGalleryProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [supermemoryQuery, setSupermemoryQuery] = useState('');
+  const [supermemoryResults, setSupermemoryResults] = useState<any[]>([]);
   const containerRef = useRef<HTMLDivElement>(null);
   const [scrollPosition, setScrollPosition] = useState(0);
 
@@ -48,19 +51,14 @@ const CircularGallery: React.FC<CircularGalleryProps> = ({
       if (!categoryMap.has(item.category)) {
         categoryMap.set(item.category, []);
       }
-      categoryMap.get(item.category)!.push(item);
+      categoryMap.get(item.category)?.push(item);
     });
-
-    const categoryColors = [
-      '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57',
-      '#FF9FF3', '#54A0FF', '#5F27CD', '#00D2D3', '#FF9F43'
-    ];
 
     return Array.from(categoryMap.entries()).map(([name, categoryItems], index) => ({
       name,
       count: categoryItems.length,
       thumbnail: categoryItems[0]?.image || '',
-      color: categoryColors[index % categoryColors.length]
+      color: `hsl(${Math.random() * 360}, 70%, 60%)`
     }));
   }, [items]);
 
@@ -116,8 +114,57 @@ const CircularGallery: React.FC<CircularGalleryProps> = ({
     setSelectedImage(categoryItems[newIndex]);
   };
 
+  const handleSupermemorySearch = async () => {
+    try {
+      if (!supermemoryQuery) return;
+      const results = await searchPhotos(supermemoryQuery);
+      setSupermemoryResults(results?.results || []);
+    } catch (error) {
+      console.error('Supermemory search error:', error);
+      setSupermemoryResults([]);
+    }
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto">
+      {/* Supermemory AI Search */}
+      <div className="mb-8 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+        <div className="flex items-center gap-2 mb-2">
+          <Search className="w-5 h-5 text-blue-400" />
+          <h2 className="text-xl font-semibold text-white">AI-Powered Photo Search</h2>
+        </div>
+        <div className="flex gap-2 mb-4">
+          <input
+            type="text"
+            placeholder="Search photos by description, category, or other metadata..."
+            className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+            value={supermemoryQuery}
+            onChange={e => setSupermemoryQuery(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleSupermemorySearch()}
+          />
+          <button
+            onClick={handleSupermemorySearch}
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+            disabled={!supermemoryQuery}
+          >
+            Search
+          </button>
+        </div>
+        
+        {supermemoryResults.length > 0 && (
+          <div>
+            <h3 className="text-lg font-medium text-white mb-2">AI Search Results:</h3>
+            <div className="space-y-2">
+              {supermemoryResults.map((res, i) => (
+                <div key={i} className="p-3 bg-gray-700/50 rounded-lg border border-gray-600">
+                  <p className="text-white">{res.content}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Circular Category Selector */}
       <AnimatePresence mode="wait">
         {!selectedCategory ? (
