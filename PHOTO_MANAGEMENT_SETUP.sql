@@ -1,6 +1,11 @@
 -- SPR-HOA Photo Management System Setup
 -- Run this script in Supabase SQL Editor
 
+-- Drop existing trigger and function if they exist to avoid conflicts
+-- Using CASCADE to drop dependent triggers on other tables
+DROP TRIGGER IF EXISTS update_photo_submissions_updated_at ON photo_submissions;
+DROP FUNCTION IF EXISTS update_updated_at_column CASCADE;
+
 -- Create photo submissions table
 CREATE TABLE IF NOT EXISTS photo_submissions (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
@@ -19,6 +24,14 @@ CREATE TABLE IF NOT EXISTS photo_submissions (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create photo categories table for album management
+CREATE TABLE IF NOT EXISTS photo_categories (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  category_name VARCHAR(50) UNIQUE NOT NULL,
+  description TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Add profile picture approval fields to owner_profiles
 ALTER TABLE owner_profiles
 ADD COLUMN IF NOT EXISTS profile_picture_url TEXT,
@@ -32,16 +45,16 @@ ADD COLUMN IF NOT EXISTS profile_picture_admin_notes TEXT;
 ALTER TABLE photo_submissions ENABLE ROW LEVEL SECURITY;
 
 -- Photo submission policies
-CREATE POLICY IF NOT EXISTS "Users can submit photos" ON photo_submissions
+CREATE POLICY "Users can submit photos" ON photo_submissions
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "Users can view own photos" ON photo_submissions
+CREATE POLICY "Users can view own photos" ON photo_submissions
   FOR SELECT USING (user_id = auth.uid());
 
-CREATE POLICY IF NOT EXISTS "Users can view approved photos" ON photo_submissions
+CREATE POLICY "Users can view approved photos" ON photo_submissions
   FOR SELECT USING (status = 'approved');
 
-CREATE POLICY IF NOT EXISTS "Admins can manage all photos" ON photo_submissions
+CREATE POLICY "Admins can manage all photos" ON photo_submissions
   FOR ALL USING (
     EXISTS (
       SELECT 1 FROM admin_users
@@ -49,12 +62,24 @@ CREATE POLICY IF NOT EXISTS "Admins can manage all photos" ON photo_submissions
     )
   );
 
+-- Enable RLS on photo_categories
+ALTER TABLE photo_categories ENABLE ROW LEVEL SECURITY;
+
+-- Photo categories policies
+CREATE POLICY "Admins can manage photo categories" ON photo_categories
+FOR ALL TO authenticated
+USING (EXISTS (SELECT 1 FROM admin_users WHERE admin_users.user_id = auth.uid()));
+
+CREATE POLICY "Users can view photo categories" ON photo_categories
+FOR SELECT TO authenticated
+USING (true);
+
 -- Profile picture policies
-CREATE POLICY IF NOT EXISTS "Users can update own profile pictures" ON owner_profiles
+CREATE POLICY "Users can update own profile pictures" ON owner_profiles
   FOR UPDATE USING (auth.uid() = user_id)
   WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY IF NOT EXISTS "Admins can update profile picture status" ON owner_profiles
+CREATE POLICY "Admins can update profile picture status" ON owner_profiles
   FOR UPDATE USING (
     EXISTS (
       SELECT 1 FROM admin_users
@@ -147,13 +172,21 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Ensure admin_users table exists
+-- Create admin users table
 CREATE TABLE IF NOT EXISTS admin_users (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
-  role VARCHAR(20) DEFAULT 'admin',
+  role VARCHAR(50) NOT NULL DEFAULT 'admin',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Insert the admin user
+INSERT INTO admin_users (user_id, role)
+VALUES ('9c7335bf-9b9f-4d03-b013-1ac48591b93d', 'admin')
+ON CONFLICT (user_id) DO UPDATE SET role = EXCLUDED.role;
+
+-- Enable RLS on admin_users
+ALTER TABLE admin_users ENABLE ROW LEVEL SECURITY;
 
 -- Set up triggers for updated_at timestamps
 CREATE OR REPLACE FUNCTION update_updated_at_column()
