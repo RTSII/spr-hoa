@@ -20,6 +20,31 @@ A premium web portal exclusively for owners at Sandpiper Run, a luxury oceanfron
 
 ---
 
+## CSS/Tailwind/Styling Not Loading? (2025-08-11)
+
+### Issue
+After some edits, the local dev server (localhost) was not loading any custom CSS/Tailwind styling—only browser defaults appeared. This was due to either a missing or broken stylesheet injection from Vite, usually caused by:
+- Incorrect or missing import of `index.css` in `main.tsx`
+- Syntax errors in Tailwind/CSS files
+- Corrupted Vite cache or build artifacts
+- Misconfiguration in `vite.config.js`, `tailwind.config.js`, or `postcss.config.js`
+
+### Solution Steps
+1. **Verify** `index.css` is imported in `main.tsx`.
+2. **Check** all config files (`vite.config.js`, `tailwind.config.js`, `postcss.config.js`) for typos or misconfigurations after any dependency or config change.
+3. **Clear build artifacts**: Delete `.vite`, `dist`, `node_modules`, and lock files, then reinstall dependencies and restart the dev server.
+4. **Fix silent CSS errors**: Even a single typo in a Tailwind or custom CSS file can prevent the stylesheet from loading. Check for errors in your editor or terminal.
+5. **Restart** the dev server after any major change.
+
+### Prevention Tips
+- After any edit to config or dependencies, always:
+  - Re-check your CSS import and config files
+  - Clear Vite cache and rebuild if styles suddenly disappear
+  - Use your editor’s error highlighting for CSS/Tailwind
+- If styles are missing, check browser dev tools: is your CSS file loaded? If not, restart the dev server and check for errors in the terminal.
+
+---
+
 ## AI Agent QA & Feature Verification
 
 Whenever new features, major changes, or new pages are introduced, the AI Agent (Cascade) must:

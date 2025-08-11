@@ -1,5 +1,27 @@
 # Known Issues
 
+## [2025-08-11] CSS/Tailwind/Styling Not Loading (Resolved)
+
+### Issue
+After some edits, the app loaded with only browser default styles—no Tailwind or custom CSS. This was due to Vite not injecting the stylesheet, usually caused by:
+- Missing or broken `index.css` import in `main.tsx`
+- CSS/Tailwind syntax errors
+- Corrupted Vite cache or build artifacts
+- Config errors in `vite.config.js`, `tailwind.config.js`, or `postcss.config.js`
+
+### Solution
+- Verified `index.css` import in `main.tsx`
+- Checked all config files for typos/misconfigurations
+- Deleted `.vite`, `dist`, `node_modules`, and lock files, then reinstalled dependencies
+- Fixed any CSS syntax errors
+- Restarted dev server
+
+### Prevention Tips
+- After any config/dependency edit, always check CSS imports/configs and clear Vite cache if styles disappear
+- Use editor error highlighting for CSS/Tailwind
+- If styles are missing, check browser dev tools for stylesheet loading and restart dev server if needed
+
+
 **2025-07-27 Update:**
 - All critical CSS/TS errors are resolved.
 - If you encounter build or runtime errors, see DEV_SERVER_TROUBLESHOOTING.md.

@@ -1,5 +1,27 @@
 # Development Server Troubleshooting Guide
 
+## [2025-08-11] CSS/Tailwind/Styling Not Loading on Localhost? (Resolved)
+
+### Issue
+After certain edits, the app loaded with only browser default styles—no Tailwind or custom CSS. This was due to Vite not injecting the stylesheet, often caused by:
+- Missing or broken `index.css` import in `main.tsx`
+- Syntax errors in Tailwind or custom CSS
+- Corrupted Vite cache or build artifacts
+- Config errors in `vite.config.js`, `tailwind.config.js`, or `postcss.config.js`
+
+### Solution
+1. Verify `index.css` is imported in `main.tsx`.
+2. Check all config files for typos or misconfigurations after any dependency or config change.
+3. Delete `.vite`, `dist`, `node_modules`, and lock files, then reinstall dependencies and restart the dev server.
+4. Fix any CSS/Tailwind syntax errors—these can silently break stylesheet injection.
+5. Always restart the dev server after major changes.
+
+### Prevention Tips
+- After editing config or dependencies, always check CSS imports and configs, and clear Vite cache if styles disappear.
+- Use your editor’s error highlighting for CSS/Tailwind.
+- If styles are missing, check browser dev tools for stylesheet loading and restart the dev server if needed.
+
+
 ## The Issue
 The development server is having trouble with rollup dependencies on Windows. This is a known issue with npm and optional dependencies.
 

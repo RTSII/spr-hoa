@@ -40,6 +40,19 @@ npm run dev
 
 The application will be available at http://localhost:5173
 
+---
+
+### [2025-08-11] CSS/Tailwind/Styling Not Loading? (Resolved)
+If the app loads with only browser default styles and no Tailwind/custom CSS:
+- Check that `index.css` is imported in `main.tsx`
+- Check for syntax errors in CSS/Tailwind files
+- Delete `.vite`, `dist`, `node_modules`, and lock files, then reinstall and restart the dev server
+- Check all config files for typos/misconfigurations
+- Always restart the dev server after major changes
+
+If styles are missing, check browser dev tools for stylesheet loading and restart the dev server if needed.
+
+
 ### 5. Test the Registration Flow
 1. Navigate to the registration page
 2. Use any unit number and account number from the database (e.g., Unit: A1A, Account: 3298)

@@ -42,6 +42,12 @@ WHERE u.email = 'rob@ursllc.com';
 ```
 
 ### **Step 3: Test the System**
+
+- [ ] After any config or dependency change, verify that CSS/Tailwind/styling loads correctly in the browser. If styles are missing:
+  - Check that `index.css` is imported in `main.tsx`
+  - Clear `.vite`, `dist`, `node_modules`, and lock files, then reinstall and restart the dev server
+  - Check for syntax errors in CSS/Tailwind files
+
 ```sql
 -- Should show empty initially
 SELECT * FROM admin_review_queue;
