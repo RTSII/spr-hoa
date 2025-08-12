@@ -1,13 +1,12 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { gsap } from 'gsap';
 
 interface BentoCardProps {
   children: React.ReactNode;
   className?: string;
-  textAutoHide?: boolean;
   enableStars?: boolean;
-  enableSpotlight?: boolean;
-  enableBorderGlow?: boolean;
+  enableSpotlight?: boolean; // deprecated: no-op to satisfy existing callers
+  enableBorderGlow?: boolean; // deprecated: no-op (we removed glow)
   disableAnimations?: boolean;
   spotlightRadius?: number;
   particleCount?: number;
@@ -15,25 +14,26 @@ interface BentoCardProps {
   glowColor?: string;
   clickEffect?: boolean;
   enableMagnetism?: boolean;
+  onClick?: React.MouseEventHandler<HTMLDivElement>;
 }
 
 const BentoCard: React.FC<BentoCardProps> = ({
   children,
   className = '',
-  textAutoHide = true,
   enableStars = true,
-  enableSpotlight = true,
-  enableBorderGlow = true,
+  enableSpotlight: _enableSpotlight = false,
+  enableBorderGlow: _enableBorderGlow = false,
   disableAnimations = false,
   spotlightRadius = 300,
   particleCount = 12,
-  enableTilt = false,
+  enableTilt = true,
   glowColor = "132, 0, 255",
   clickEffect = true,
-  enableMagnetism = true
+  enableMagnetism = true,
+  onClick
 }) => {
   const cardRef = useRef<HTMLDivElement>(null);
-  const [isHovered, setIsHovered] = useState(false);
+  // hover state no longer needed; effects are purely transform-based
   
   useEffect(() => {
     if (disableAnimations || !cardRef.current) return;
@@ -56,7 +56,7 @@ const BentoCard: React.FC<BentoCardProps> = ({
       }
     }
     
-    // Handle mouse move for spotlight and tilt effects
+    // Handle mouse move for tilt and magnetism effects
     const handleMouseMove = (e: MouseEvent) => {
       if (!card) return;
       
@@ -64,50 +64,51 @@ const BentoCard: React.FC<BentoCardProps> = ({
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       
-      // Spotlight effect
-      if (enableSpotlight) {
-        card.style.background = `radial-gradient(circle at ${x}px ${y}px, rgba(${glowColor}, 0.1) ${spotlightRadius/4}px, transparent ${spotlightRadius}px)`;
-      }
-      
       // Tilt effect
       if (enableTilt) {
         const centerX = rect.width / 2;
         const centerY = rect.height / 2;
-        const rotateX = (y - centerY) / 10;
-        const rotateY = (centerX - x) / 10;
+        const rotateX = (y - centerY) / 12; // slightly softer
+        const rotateY = (centerX - x) / 12;
         
         gsap.to(card, {
           rotationX: rotateX,
           rotationY: rotateY,
-          duration: 0.5
+          transformPerspective: 800,
+          duration: 0.4,
+          ease: 'power2.out'
         });
       }
-    };
-    
-    // Handle mouse enter
-    const handleMouseEnter = () => {
-      setIsHovered(true);
+
+      // Magnetism effect: subtle translation toward cursor
+      if (enableMagnetism) {
+        const strength = 8; // max px offset
+        const dx = ((x / rect.width) - 0.5) * 2; // -1..1
+        const dy = ((y / rect.height) - 0.5) * 2;
+        gsap.to(card, {
+          x: dx * strength,
+          y: dy * strength,
+          duration: 0.3,
+          ease: 'power2.out'
+        });
+      }
     };
     
     // Handle mouse leave
     const handleMouseLeave = () => {
       if (!card) return;
       
-      setIsHovered(false);
-      
-      // Reset spotlight
-      if (enableSpotlight) {
-        card.style.background = '';
-      }
+      // Reset transforms for tilt/magnetism
       
       // Reset tilt
-      if (enableTilt) {
-        gsap.to(card, {
-          rotationX: 0,
-          rotationY: 0,
-          duration: 0.5
-        });
-      }
+      gsap.to(card, {
+        rotationX: 0,
+        rotationY: 0,
+        x: 0,
+        y: 0,
+        duration: 0.4,
+        ease: 'power2.out'
+      });
     };
     
     // Handle click effect
@@ -143,11 +144,10 @@ const BentoCard: React.FC<BentoCardProps> = ({
     };
     
     // Add event listeners
-    if (enableSpotlight || enableTilt || enableMagnetism) {
+    if (enableTilt || enableMagnetism) {
       card.addEventListener('mousemove', handleMouseMove);
     }
     
-    card.addEventListener('mouseenter', handleMouseEnter);
     card.addEventListener('mouseleave', handleMouseLeave);
     
     if (clickEffect) {
@@ -158,7 +158,6 @@ const BentoCard: React.FC<BentoCardProps> = ({
     return () => {
       if (card) {
         card.removeEventListener('mousemove', handleMouseMove);
-        card.removeEventListener('mouseenter', handleMouseEnter);
         card.removeEventListener('mouseleave', handleMouseLeave);
         card.removeEventListener('click', handleClick);
         
@@ -170,28 +169,18 @@ const BentoCard: React.FC<BentoCardProps> = ({
         });
       }
     };
-  }, [disableAnimations, enableStars, particleCount, enableSpotlight, enableTilt, glowColor, spotlightRadius, clickEffect]);
+  }, [disableAnimations, enableStars, particleCount, enableTilt, glowColor, spotlightRadius, clickEffect]);
   
   return (
     <div 
       ref={cardRef}
-      className={`relative rounded-xl border border-white/10 bg-white/5 p-6 overflow-hidden transition-all duration-300 ${className}`}
+      className={`relative rounded-xl border border-white/10 bg-white/5 p-6 overflow-hidden transition-all duration-300 will-change-transform ${className}`}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
     >
-      {textAutoHide && isHovered ? (
-        <div className="opacity-0 transition-opacity duration-300">{children}</div>
-      ) : (
-        <div className="opacity-100 transition-opacity duration-300">{children}</div>
-      )}
-      
-      {/* Border glow effect */}
-      {enableBorderGlow && !disableAnimations && (
-        <div 
-          className="absolute inset-0 rounded-xl pointer-events-none border border-white/20 transition-all duration-300"
-          style={{
-            boxShadow: isHovered ? `0 0 15px rgba(${glowColor}, 0.5)` : 'none'
-          }}
-        />
-      )}
+      {/* Always keep inner content fully visible */}
+      <div className="opacity-100 transition-opacity duration-300">{children}</div>
     </div>
   );
 };

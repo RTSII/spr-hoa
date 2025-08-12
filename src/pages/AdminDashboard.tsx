@@ -1093,7 +1093,7 @@ const AdminDashboard = () => {
 
       {/* Background overlay when panels are open */}
       <AnimatePresence>
-        {(showInbox || showProfile || activeAdminPanel) && (
+        {(showInbox || showProfile || activeAdminPanel === 'admin-messaging' || activeAdminPanel === 'messaging-test') && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { storeDevAction, searchDevActions } from '../lib/supermemory';
+import { storeDevAction } from '../lib/supermemory';
 
 const DevPortal: React.FC = () => {
   const [testResult, setTestResult] = useState<string | null>(null);
-  const [supermemoryQuery, setSupermemoryQuery] = useState('');
-  const [supermemoryResults, setSupermemoryResults] = useState<any[]>([]);
+  // Future: add Supermemory query UI
 
   // Example test: check if Register page renders
   const handleTestRegister = async () => {
@@ -41,7 +40,14 @@ const DevPortal: React.FC = () => {
     <div style={{ padding: 32, background: '#101624', color: '#fff', minHeight: '100vh' }}>
       <h1 style={{ fontSize: 36, marginBottom: 24 }}>Developer Portal</h1>
       <button
-        style={{
+        onClick={handleTestRegister}
+        style={{ padding: '10px 16px', borderRadius: 8, background: '#2953A1', color: '#fff', border: 'none', cursor: 'pointer' }}
+      >
+        Run Register Render Test
+      </button>
+      {testResult && (
+        <div style={{ marginTop: 12, color: '#9FE870' }}>{testResult}</div>
+      )}
       <hr style={{ margin: '32px 0', borderColor: '#2953A1' }} />
       <div>
         <p>More dev tools and diagnostics coming soon.</p>

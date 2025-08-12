@@ -44,7 +44,13 @@
     border-radius: 1rem;
     border: 1px solid rgba(255,255,255,0.2);
     box-shadow: 0 8px 40px 0 rgba(16,22,36,0.35);
+    -webkit-backdrop-filter: blur(12px);
+    -moz-backdrop-filter: blur(12px);
+    -ms-backdrop-filter: blur(12px);
     backdrop-filter: blur(12px);
+    -webkit-transition: all 0.5s;
+    -moz-transition: all 0.5s;
+    -ms-transition: all 0.5s;
     transition: all 0.5s;
   }
 
@@ -55,6 +61,9 @@
     padding: 0.75rem 1.5rem;
     font-weight: 500;
     box-shadow: 0 2px 12px 0 rgba(16,22,36,0.10);
+    -webkit-transition: all 0.3s;
+    -moz-transition: all 0.3s;
+    -ms-transition: all 0.3s;
     transition: all 0.3s;
   }
 
@@ -65,8 +74,15 @@
   .text-gradient {
     background: linear-gradient(90deg, var(--spr-ocean), var(--spr-blue));
     -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    -moz-background-clip: text;
+    -ms-background-clip: text;
     background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -moz-text-fill-color: transparent;
+    -ms-text-fill-color: transparent;
+    -webkit-text-fill-color: transparent;
+  -moz-text-fill-color: transparent;
+  text-fill-color: transparent; /* fallback, mostly ignored */
     color: transparent;
   }
 
@@ -93,7 +109,8 @@
   }
 
   .touch-area {
-    @apply select-none active:scale-95 transition-transform duration-150;
+    /* @apply is valid only in Tailwind/PostCSS context */
+    @apply glass-card shadow-lg rounded-xl bg-white/10 backdrop-blur-md border border-white/20 transition-all duration-300;
   }
 }
 
@@ -116,20 +133,40 @@
 }
 
 /* Animations */
+@-webkit-keyframes fadeInUp {
+  from { opacity: 0; -webkit-transform: translateY(40px); transform: translateY(40px); }
+  to { opacity: 1; -webkit-transform: translateY(0); transform: translateY(0); }
+}
+@-moz-keyframes fadeInUp {
+  from { opacity: 0; -moz-transform: translateY(40px); transform: translateY(40px); }
+  to { opacity: 1; -moz-transform: translateY(0); transform: translateY(0); }
+}
 @keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(40px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; -webkit-transform: translateY(40px); transform: translateY(40px); }
+  to { opacity: 1; -webkit-transform: translateY(0); transform: translateY(0); }
 }
 
 .animate-fadeInUp {
+  -webkit-animation: fadeInUp 0.8s cubic-bezier(.22,1,.36,1) both;
+  -moz-animation: fadeInUp 0.8s cubic-bezier(.22,1,.36,1) both;
   animation: fadeInUp 0.8s cubic-bezier(.22,1,.36,1) both;
 }
 
+@-webkit-keyframes glassPop {
+  0% { opacity: 0; -webkit-transform: scale(0.95); transform: scale(0.95); }
+  100% { opacity: 1; -webkit-transform: scale(1); transform: scale(1); }
+}
+@-moz-keyframes glassPop {
+  0% { opacity: 0; -moz-transform: scale(0.95); transform: scale(0.95); }
+  100% { opacity: 1; -moz-transform: scale(1); transform: scale(1); }
+}
 @keyframes glassPop {
-  0% { opacity: 0; transform: scale(0.95); }
-  100% { opacity: 1; transform: scale(1); }
+  0% { opacity: 0; -webkit-transform: scale(0.95); transform: scale(0.95); }
+  100% { opacity: 1; -webkit-transform: scale(1); transform: scale(1); }
 }
 
 .animate-glassPop {
+  -webkit-animation: glassPop 0.5s cubic-bezier(.22,1,.36,1) both;
+  -moz-animation: glassPop 0.5s cubic-bezier(.22,1,.36,1) both;
   animation: glassPop 0.5s cubic-bezier(.22,1,.36,1) both;
 }

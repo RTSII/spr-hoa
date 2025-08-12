@@ -104,7 +104,7 @@ const InviteRequest = () => {
     setSearching(true);
     try {
       const results = await searchInviteRequests(supermemoryQuery);
-      setSupermemoryResults(results || []);
+      setSupermemoryResults(Array.isArray(results) ? results : []);
     } catch (err) {
       console.error('Supermemory search failed:', err);
       setSupermemoryResults([]);
@@ -427,8 +427,10 @@ const InviteRequest = () => {
           </motion.div>
         </motion.div>
       </div>
+      </motion.div>
+      </div>
     </div>
-  )
+    );
 }
 
 export default InviteRequest

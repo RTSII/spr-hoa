@@ -1,11 +1,14 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
 
 // Import all pages
 import Login from './pages/Login';
 import AdminDashboard from './pages/AdminDashboard';
+import AdminDashboardMagicBento from './pages/AdminDashboardMagicBento';
+import AdminDashboardWithMessaging from './pages/AdminDashboardWithMessaging';
+import DevPortal from './pages/DevPortal';
 import Dashboard from './pages/Dashboard';
 import Register from './pages/Register';
 import InviteRequest from './pages/InviteRequest';
@@ -31,13 +34,47 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/invite-request" element={<InviteRequest />} />
 
-            {/* Admin route - protected */}
+            {/* Admin routes - admin only */}
+            {/* Default admin now uses Magic Bento UI */}
             <Route
               path="/admin"
               element={
-                <ProtectedRoute>
+                <AdminRoute>
+                  <AdminDashboardMagicBento />
+                </AdminRoute>
+              }
+            />
+            {/* Legacy admin (floating cards) preserved here */}
+            <Route
+              path="/admin/legacy"
+              element={
+                <AdminRoute>
                   <AdminDashboard />
-                </ProtectedRoute>
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/magic-bento"
+              element={
+                <AdminRoute>
+                  <AdminDashboardMagicBento />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/admin/messaging"
+              element={
+                <AdminRoute>
+                  <AdminDashboardWithMessaging />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="/dev-portal"
+              element={
+                <AdminRoute>
+                  <DevPortal />
+                </AdminRoute>
               }
             />
 
