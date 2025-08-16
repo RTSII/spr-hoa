@@ -44,43 +44,36 @@ const Forms = () => {
         animate={{ opacity: 1, y: 0 }}
         className="glass-card p-8"
       >
-        <h1 className="text-3xl font-display font-bold text-white mb-6">
-          Online Forms
-        </h1>
-        <p className="text-white/80 mb-8">
+        <h1 className="mb-6 font-display text-3xl font-bold text-white">Online Forms</h1>
+        <p className="mb-8 text-white/80">
           Access and submit important forms online for your convenience
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {forms.map((form, index) => (
             <motion.div
               key={form.id}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: index * 0.1 }}
-              className={`glass-card p-6 ${form.status === 'active'
-                  ? 'hover:bg-white/20 cursor-pointer'
-                  : 'opacity-60'
-                } transition-all duration-300`}
+              className={`glass-card p-6 ${
+                form.status === 'active' ? 'cursor-pointer hover:bg-white/20' : 'opacity-60'
+              } transition-all duration-300`}
             >
               <div className="flex items-start gap-4">
                 <div className="text-4xl">{form.icon}</div>
                 <div className="flex-1">
-                  <h3 className="text-xl font-semibold text-white mb-2">
-                    {form.title}
-                  </h3>
-                  <p className="text-white/70 text-sm mb-4">
-                    {form.description}
-                  </p>
+                  <h3 className="mb-2 text-xl font-semibold text-white">{form.title}</h3>
+                  <p className="mb-4 text-sm text-white/70">{form.description}</p>
                   {form.status === 'active' ? (
                     <Link
                       to={form.link}
-                      className="inline-flex items-center text-seafoam hover:text-seafoam/80 font-medium"
+                      className="inline-flex items-center font-medium text-seafoam hover:text-seafoam/80"
                     >
                       Fill out form →
                     </Link>
                   ) : (
-                    <span className="text-white/50 text-sm">Coming Soon</span>
+                    <span className="text-sm text-white/50">Coming Soon</span>
                   )}
                 </div>
               </div>

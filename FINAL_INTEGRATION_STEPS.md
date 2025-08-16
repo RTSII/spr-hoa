@@ -61,6 +61,7 @@ cd spr-hoa
 ```
 
 **You'll need**:
+
 - Resend account (free at resend.com)
 - Your Resend API key
 - Your Supabase project reference ID
@@ -70,23 +71,27 @@ cd spr-hoa
 Mark each as complete:
 
 ### ✅ Database Integration
+
 - [ ] Main messaging system SQL executed ✅ (You completed this)
 - [ ] Photo integration SQL executed
 - [ ] All functions working (test with System Testing)
 
 ### ✅ Admin Dashboard
+
 - [ ] Two new messaging features visible in constellation
 - [ ] "Send Messages" feature opens properly
 - [ ] "System Testing" shows all green checkmarks
 - [ ] Can send messages to residents
 
 ### ✅ Resident Experience
+
 - [ ] Profile page shows "My Messages" section
 - [ ] Messages display properly in inbox
 - [ ] Can mark messages as read/archive
 - [ ] Photo rejection notifications appear
 
 ### ✅ Email Integration (Optional)
+
 - [ ] Email service deployed with ./deploy-email-service.sh
 - [ ] Test email sends successfully
 - [ ] Residents receive email notifications
@@ -94,6 +99,7 @@ Mark each as complete:
 ## What You Can Do Now
 
 ### **As Admin (Rob):**
+
 ✅ **Send to All Residents**: Broadcast important announcements
 ✅ **Send by Building**: Target specific buildings (A, B, C, D)
 ✅ **Send to Individuals**: Search and message specific residents
@@ -102,6 +108,7 @@ Mark each as complete:
 ✅ **System Testing**: Verify everything works with built-in diagnostics
 
 ### **For Residents:**
+
 ✅ **Beautiful Inbox**: Modern messaging interface in Profile page
 ✅ **Photo Notifications**: Clear explanations when photos are rejected
 ✅ **Email Notifications**: Optional email delivery for important messages
@@ -111,21 +118,25 @@ Mark each as complete:
 ## Troubleshooting
 
 ### ❌ "System Testing" shows errors
+
 1. **Check SQL execution**: Re-run both SQL files
 2. **Verify permissions**: Ensure all functions deployed correctly
 3. **Check console**: Look for JavaScript errors in browser
 
 ### ❌ Messages not appearing in resident inbox
+
 1. **Check user opt-in**: Verify user has `directory_opt_in: true`
 2. **Check message table**: Verify messages were created in `site_messages`
 3. **Refresh page**: Sometimes requires page refresh
 
 ### ❌ Email notifications not working
+
 1. **Deploy email service**: Run `./deploy-email-service.sh`
 2. **Check API key**: Verify Resend API key is set correctly
 3. **Check logs**: Look at `admin_logs` table for email errors
 
 ### ❌ Admin features not visible
+
 1. **Clear browser cache**: Hard refresh the admin dashboard
 2. **Check imports**: Verify AdminMessaging components imported correctly
 3. **Check console errors**: Look for JavaScript import errors

@@ -1,29 +1,29 @@
-import { createClient } from '@supabase/supabase-js';
-import * as fs from 'fs';
-import * as path from 'path';
-import { fileURLToPath } from 'url';
-import * as dotenv from 'dotenv';
+import { createClient } from '@supabase/supabase-js'
+import * as fs from 'fs'
+import * as path from 'path'
+import { fileURLToPath } from 'url'
+import * as dotenv from 'dotenv'
 
 // Load environment variables
-dotenv.config();
+dotenv.config()
 
 // Get current directory
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
 
 // Supabase client setup
-const supabaseUrl = process.env.VITE_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.VITE_SUPABASE_URL
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.VITE_SUPABASE_ANON_KEY
 
 if (!supabaseUrl || !supabaseKey) {
-  console.error('❌ Missing Supabase configuration!');
-  console.log('Please make sure your .env file contains:');
-  console.log('- VITE_SUPABASE_URL');
-  console.log('- SUPABASE_SERVICE_ROLE_KEY or VITE_SUPABASE_ANON_KEY');
-  process.exit(1);
+  console.error('❌ Missing Supabase configuration!')
+  console.log('Please make sure your .env file contains:')
+  console.log('- VITE_SUPABASE_URL')
+  console.log('- SUPABASE_SERVICE_ROLE_KEY or VITE_SUPABASE_ANON_KEY')
+  process.exit(1)
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(supabaseUrl, supabaseKey)
 
 // Define SQL statements for photo management setup
 const SQL_STATEMENTS = [
@@ -166,92 +166,90 @@ const SQL_STATEMENTS = [
         'recent_activity', 0
     );
   END;
-  $$ LANGUAGE plpgsql SECURITY DEFINER`
-];
+  $$ LANGUAGE plpgsql SECURITY DEFINER`,
+]
 
 // Run SQL setup
 async function runSqlSetup() {
-  console.log('🚀 Setting up photo management database tables...');
+  console.log('🚀 Setting up photo management database tables...')
 
   for (let i = 0; i < SQL_STATEMENTS.length; i++) {
-    const statement = SQL_STATEMENTS[i];
-    console.log(`⏳ Executing SQL statement ${i + 1}/${SQL_STATEMENTS.length}...`);
+    const statement = SQL_STATEMENTS[i]
+    console.log(`⏳ Executing SQL statement ${i + 1}/${SQL_STATEMENTS.length}...`)
 
     try {
       // Execute SQL statement using the REST API
-      const { error } = await supabase.rpc('exec_sql', { sql: statement });
+      const { error } = await supabase.rpc('exec_sql', { sql: statement })
 
       if (error) {
         // Log error but continue with other statements
-        console.warn(`⚠️ Statement ${i + 1} had an issue:`, error.message);
-        console.log('Continuing with next statement...');
+        console.warn(`⚠️ Statement ${i + 1} had an issue:`, error.message)
+        console.log('Continuing with next statement...')
       } else {
-        console.log(`✅ Statement ${i + 1} executed successfully`);
+        console.log(`✅ Statement ${i + 1} executed successfully`)
       }
     } catch (err) {
-      console.warn(`⚠️ Error executing statement ${i + 1}:`, err.message);
+      console.warn(`⚠️ Error executing statement ${i + 1}:`, err.message)
     }
   }
 
-  console.log('\n🎉 Photo management database setup completed!');
+  console.log('\n🎉 Photo management database setup completed!')
 }
 
 // Create storage buckets if needed
 async function setupStorage() {
-  console.log('\n🗄️ Setting up storage buckets...');
+  console.log('\n🗄️ Setting up storage buckets...')
 
   try {
     // Check if the photos bucket exists
-    const { data: buckets, error } = await supabase.storage.listBuckets();
+    const { data: buckets, error } = await supabase.storage.listBuckets()
 
     if (error) {
-      console.warn('⚠️ Error checking storage buckets:', error.message);
-      return;
+      console.warn('⚠️ Error checking storage buckets:', error.message)
+      return
     }
 
-    const photosBucketExists = buckets.some(bucket => bucket.name === 'photos');
+    const photosBucketExists = buckets.some((bucket) => bucket.name === 'photos')
 
     if (!photosBucketExists) {
-      console.log('Creating photos bucket...');
+      console.log('Creating photos bucket...')
       const { error: createError } = await supabase.storage.createBucket('photos', {
         public: true,
         fileSizeLimit: 10485760, // 10MB
-      });
+      })
 
       if (createError) {
-        console.warn('⚠️ Error creating photos bucket:', createError.message);
+        console.warn('⚠️ Error creating photos bucket:', createError.message)
       } else {
-        console.log('✅ Photos bucket created successfully');
+        console.log('✅ Photos bucket created successfully')
       }
     } else {
-      console.log('✅ Photos bucket already exists');
+      console.log('✅ Photos bucket already exists')
     }
 
     // Set up storage policies for photos bucket
     // Note: This part is tricky with the JS client, so we'll provide instructions
-    console.log('\n⚠️ Important: You need to manually set up the following storage policies in the Supabase dashboard:');
-    console.log('1. Allow authenticated users to upload photos');
-    console.log('2. Allow users to read their own photos');
-    console.log('3. Allow admins to manage all photos');
-    console.log('4. Allow public access to approved photos');
-
+    console.log(
+      '\n⚠️ Important: You need to manually set up the following storage policies in the Supabase dashboard:',
+    )
+    console.log('1. Allow authenticated users to upload photos')
+    console.log('2. Allow users to read their own photos')
+    console.log('3. Allow admins to manage all photos')
+    console.log('4. Allow public access to approved photos')
   } catch (err) {
-    console.warn('⚠️ Error setting up storage:', err.message);
+    console.warn('⚠️ Error setting up storage:', err.message)
   }
 }
 
 // Verify admin_users table exists
 async function verifyAdminTable() {
-  console.log('\n🔍 Verifying admin_users table...');
+  console.log('\n🔍 Verifying admin_users table...')
 
   try {
-    const { data, error } = await supabase
-      .from('admin_users')
-      .select('count')
-      .limit(1);
+    const { data, error } = await supabase.from('admin_users').select('count').limit(1)
 
     if (error && error.message.includes('does not exist')) {
-      console.log('⚠️ admin_users table does not exist. Creating it...');
+      console.log('⚠️ admin_users table does not exist. Creating it...')
 
       const createTableSql = `
         CREATE TABLE IF NOT EXISTS admin_users (
@@ -267,119 +265,118 @@ async function verifyAdminTable() {
           FOR SELECT USING (
             auth.uid() IN (SELECT user_id FROM admin_users)
           );
-      `;
+      `
 
-      const { error: createError } = await supabase.rpc('exec_sql', { sql: createTableSql });
+      const { error: createError } = await supabase.rpc('exec_sql', { sql: createTableSql })
 
       if (createError) {
-        console.warn('⚠️ Error creating admin_users table:', createError.message);
+        console.warn('⚠️ Error creating admin_users table:', createError.message)
       } else {
-        console.log('✅ admin_users table created successfully');
+        console.log('✅ admin_users table created successfully')
       }
     } else if (error) {
-      console.warn('⚠️ Error checking admin_users table:', error.message);
+      console.warn('⚠️ Error checking admin_users table:', error.message)
     } else {
-      console.log('✅ admin_users table exists');
+      console.log('✅ admin_users table exists')
     }
   } catch (err) {
-    console.warn('⚠️ Error verifying admin_users table:', err.message);
+    console.warn('⚠️ Error verifying admin_users table:', err.message)
   }
 }
 
 // Verify admin user exists
 async function verifyAdminUser() {
-  console.log('\n👤 Checking for admin user...');
+  console.log('\n👤 Checking for admin user...')
 
   try {
     // Check if admin email exists in auth.users
     const { data: authUser, error: authError } = await supabase.auth.admin.listUsers({
       filter: {
-        email: 'rtsii10@gmail.com'
-      }
-    });
+        email: 'rtsii10@gmail.com',
+      },
+    })
 
     if (authError) {
-      console.warn('⚠️ Cannot verify admin user:', authError.message);
-      console.log('You need to manually create the admin user:');
-      console.log('1. Register a user with email: rtsii10@gmail.com');
-      console.log('2. Add the user to admin_users table');
-      return;
+      console.warn('⚠️ Cannot verify admin user:', authError.message)
+      console.log('You need to manually create the admin user:')
+      console.log('1. Register a user with email: rtsii10@gmail.com')
+      console.log('2. Add the user to admin_users table')
+      return
     }
 
-    const adminUsers = authUser?.users || [];
+    const adminUsers = authUser?.users || []
 
     if (adminUsers.length === 0) {
-      console.log('⚠️ Admin user not found in auth.users');
-      console.log('Please register a user with email: rtsii10@gmail.com');
-      return;
+      console.log('⚠️ Admin user not found in auth.users')
+      console.log('Please register a user with email: rtsii10@gmail.com')
+      return
     }
 
-    const adminUserId = adminUsers[0].id;
+    const adminUserId = adminUsers[0].id
 
     // Check if admin exists in admin_users table
     const { data: adminData, error: adminError } = await supabase
       .from('admin_users')
       .select('*')
-      .eq('user_id', adminUserId);
+      .eq('user_id', adminUserId)
 
     if (adminError) {
-      console.warn('⚠️ Error checking admin_users table:', adminError.message);
-      return;
+      console.warn('⚠️ Error checking admin_users table:', adminError.message)
+      return
     }
 
     if (!adminData || adminData.length === 0) {
-      console.log('⚠️ Admin user exists but not in admin_users table. Adding...');
+      console.log('⚠️ Admin user exists but not in admin_users table. Adding...')
 
       const { error: insertError } = await supabase
         .from('admin_users')
-        .insert({ user_id: adminUserId, role: 'admin' });
+        .insert({ user_id: adminUserId, role: 'admin' })
 
       if (insertError) {
-        console.warn('⚠️ Error adding admin user to admin_users table:', insertError.message);
+        console.warn('⚠️ Error adding admin user to admin_users table:', insertError.message)
       } else {
-        console.log('✅ Admin user added to admin_users table');
+        console.log('✅ Admin user added to admin_users table')
       }
     } else {
-      console.log('✅ Admin user exists and is properly set up');
+      console.log('✅ Admin user exists and is properly set up')
     }
   } catch (err) {
-    console.warn('⚠️ Error verifying admin user:', err.message);
+    console.warn('⚠️ Error verifying admin user:', err.message)
   }
 }
 
 // Main function
 async function main() {
-  console.log('📸 SPR-HOA Photo Management System Setup');
-  console.log('========================================\n');
+  console.log('📸 SPR-HOA Photo Management System Setup')
+  console.log('========================================\n')
 
   try {
     // Verify admin_users table exists
-    await verifyAdminTable();
+    await verifyAdminTable()
 
     // Verify admin user exists
-    await verifyAdminUser();
+    await verifyAdminUser()
 
     // Run SQL setup
-    await runSqlSetup();
+    await runSqlSetup()
 
     // Set up storage
-    await setupStorage();
+    await setupStorage()
 
-    console.log('\n🎉 Photo management system setup completed successfully!');
-    console.log('\nNext steps:');
-    console.log('1. Log in as admin: rtsii10@gmail.com / basedgod');
-    console.log('2. Go to Photo Management to see the approval system');
-    console.log('3. Test uploading profile pictures as regular users');
-    console.log('4. Approve or reject photos from the admin dashboard');
-
+    console.log('\n🎉 Photo management system setup completed successfully!')
+    console.log('\nNext steps:')
+    console.log('1. Log in as admin: rtsii10@gmail.com / basedgod')
+    console.log('2. Go to Photo Management to see the approval system')
+    console.log('3. Test uploading profile pictures as regular users')
+    console.log('4. Approve or reject photos from the admin dashboard')
   } catch (error) {
-    console.error('\n❌ Setup failed:', error.message);
-    console.log('\nTroubleshooting:');
-    console.log('1. Check your Supabase credentials in .env file');
-    console.log('2. Ensure you have the right permissions');
-    console.log('3. Try manual setup using QUICK_ADMIN_SETUP.md or PROFILE_PICTURE_APPROVAL.sql');
+    console.error('\n❌ Setup failed:', error.message)
+    console.log('\nTroubleshooting:')
+    console.log('1. Check your Supabase credentials in .env file')
+    console.log('2. Ensure you have the right permissions')
+    console.log('3. Try manual setup using QUICK_ADMIN_SETUP.md or PROFILE_PICTURE_APPROVAL.sql')
   }
 }
 
 // Run the main function
-main();
+main()

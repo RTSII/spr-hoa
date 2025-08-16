@@ -67,7 +67,8 @@ const Directory = () => {
     try {
       const { data, error } = await supabase
         .from('owner_profiles')
-        .select(`
+        .select(
+          `
           id,
           unit_number,
           first_name,
@@ -80,7 +81,8 @@ const Directory = () => {
           show_phone,
           show_unit,
           directory_opt_in
-        `)
+        `,
+        )
         .eq('directory_opt_in', true)
         .order('unit_number')
 
@@ -104,10 +106,7 @@ const Directory = () => {
 
   // Helper: get resident photo or default avatar
   const getResidentPhoto = (resident: DirectoryEntry) => {
-    if (
-      resident.profile_picture_url &&
-      resident.profile_picture_status === 'approved'
-    ) {
+    if (resident.profile_picture_url && resident.profile_picture_status === 'approved') {
       return resident.profile_picture_url
     }
     // Default avatar using UI Avatars service
@@ -156,14 +155,14 @@ const Directory = () => {
         animate={{ opacity: 1, y: 0 }}
         className="glass-card p-8"
       >
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
-          <h1 className="text-3xl font-display font-bold text-white mb-4 md:mb-0">
+        <div className="mb-6 flex flex-col items-start justify-between md:flex-row md:items-center">
+          <h1 className="mb-4 font-display text-3xl font-bold text-white md:mb-0">
             Resident Directory
           </h1>
           <div className="flex items-center space-x-4">
             <a
               href="/profile"
-              className="glass-button text-base font-semibold px-6 py-2 rounded-lg shadow-lg bg-gradient-to-r from-[#2953A6] to-[#6bb7e3] text-white hover:from-[#1e3a6b] hover:to-[#4a90e2] focus:outline-none focus:ring-2 focus:ring-seafoam transition-all duration-200"
+              className="glass-button rounded-lg bg-gradient-to-r from-[#2953A6] to-[#6bb7e3] px-6 py-2 text-base font-semibold text-white shadow-lg transition-all duration-200 hover:from-[#1e3a6b] hover:to-[#4a90e2] focus:outline-none focus:ring-2 focus:ring-seafoam"
               aria-label="Manage My Directory Profile"
             >
               Manage My Directory Profile
@@ -183,11 +182,11 @@ const Directory = () => {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-seafoam/20 border border-seafoam/50 rounded-lg p-4 mb-6"
+            className="mb-6 rounded-lg border border-seafoam/50 bg-seafoam/20 p-4"
           >
             <p className="text-white">
               You are not currently listed in the directory.
-              <a href="/profile" className="ml-2 text-seafoam hover:text-seafoam/80 font-medium">
+              <a href="/profile" className="ml-2 font-medium text-seafoam hover:text-seafoam/80">
                 Update your preferences
               </a>
             </p>
@@ -195,11 +194,11 @@ const Directory = () => {
         )}
 
         {/* Building Filter & Search Bar */}
-        <div className="mb-6 flex flex-col md:flex-row gap-4">
+        <div className="mb-6 flex flex-col gap-4 md:flex-row">
           <select
             value={buildingFilter}
             onChange={(e) => setBuildingFilter(e.target.value)}
-            className="w-full md:w-48 px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-seafoam focus:border-transparent transition-all duration-200"
+            className="w-full rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white transition-all duration-200 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-seafoam md:w-48"
             aria-label="Filter by building"
           >
             <option value="">All Buildings</option>
@@ -213,7 +212,7 @@ const Directory = () => {
             placeholder="Search by name or unit number..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-seafoam focus:border-transparent transition-all duration-200"
+            className="flex-1 rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-white/50 transition-all duration-200 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-seafoam"
           />
         </div>
 
@@ -240,20 +239,16 @@ const Directory = () => {
               placeholder="AI-powered search (e.g. 'owners with pets', 'find all B units')"
               value={supermemoryQuery}
               onChange={(e) => setSupermemoryQuery(e.target.value)}
-              className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-seafoam focus:border-transparent transition-all duration-200"
+              className="flex-1 rounded-lg border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-white/50 transition-all duration-200 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-seafoam"
             />
-            <button
-              type="submit"
-              className="glass-button text-sm"
-              disabled={!supermemoryQuery}
-            >
+            <button type="submit" className="glass-button text-sm" disabled={!supermemoryQuery}>
               🔍 AI Search
             </button>
           </form>
           {supermemoryResults.length > 0 && (
             <div className="mt-2 text-white/80">
-              <div className="font-bold mb-1">AI Search Results:</div>
-              <ul className="list-disc ml-6">
+              <div className="mb-1 font-bold">AI Search Results:</div>
+              <ul className="ml-6 list-disc">
                 {supermemoryResults.map((res, i) => (
                   <li key={i}>{typeof res === 'string' ? res : JSON.stringify(res)}</li>
                 ))}
@@ -263,19 +258,21 @@ const Directory = () => {
         </div>
 
         {/* Directory Stats */}
-        <div className="mb-6 text-white/70 text-sm">
+        <div className="mb-6 text-sm text-white/70">
           Showing {filteredResidents.length} of {residents.length} residents
         </div>
 
         {/* Directory List */}
         {isLoading ? (
-          <div className="text-center py-8">
+          <div className="py-8 text-center">
             <p className="text-white/70">Loading directory...</p>
           </div>
         ) : filteredResidents.length === 0 ? (
-          <div className="text-center py-8">
+          <div className="py-8 text-center">
             <p className="text-white/70">
-              {searchTerm ? 'No residents found matching your search.' : 'No residents have opted into the directory yet.'}
+              {searchTerm
+                ? 'No residents found matching your search.'
+                : 'No residents have opted into the directory yet.'}
             </p>
           </div>
         ) : (
@@ -286,13 +283,13 @@ const Directory = () => {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="luxury-card p-6 rounded-2xl shadow-lg bg-gradient-to-br from-[#2953A6] via-white/10 to-[#6bb7e3] border-2 border-[#2953A6] hover:scale-[1.02] transition-transform duration-300"
+                className="luxury-card rounded-2xl border-2 border-[#2953A6] bg-gradient-to-br from-[#2953A6] via-white/10 to-[#6bb7e3] p-6 shadow-lg transition-transform duration-300 hover:scale-[1.02]"
                 style={{ boxShadow: '0 4px 32px 0 rgba(41,83,166,0.12)' }}
               >
                 <div className="flex items-center space-x-4">
                   {/* ReactBits Profile Card Thumbnail */}
                   <div
-                    className="flex-shrink-0 cursor-pointer transform hover:scale-105 transition-transform duration-200"
+                    className="flex-shrink-0 transform cursor-pointer transition-transform duration-200 hover:scale-105"
                     onClick={() => handleThumbnailClick(resident)}
                   >
                     <ReactBitsProfileCard
@@ -300,7 +297,9 @@ const Directory = () => {
                       name={`${resident.first_name} ${resident.last_name}`}
                       title={`Unit ${resident.unit_number}`}
                       handle={resident.unit_number}
-                      status={resident.profile_picture_status === 'approved' ? 'Verified' : 'Resident'}
+                      status={
+                        resident.profile_picture_status === 'approved' ? 'Verified' : 'Resident'
+                      }
                       size="small"
                       enableTilt={true}
                       showUserInfo={false}
@@ -309,14 +308,14 @@ const Directory = () => {
                   </div>
 
                   {/* Resident Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-2 flex items-center gap-2">
                       <h3 className="text-lg font-semibold text-white">
                         {resident.first_name} {resident.last_name}
                       </h3>
                       {/* Only show unit if opted-in */}
                       {resident.show_unit && (
-                        <span className="text-seafoam text-xs font-bold bg-white/10 px-2 py-1 rounded">
+                        <span className="rounded bg-white/10 px-2 py-1 text-xs font-bold text-seafoam">
                           Unit {resident.unit_number}
                         </span>
                       )}
@@ -325,9 +324,12 @@ const Directory = () => {
                     <div className="space-y-1">
                       {/* Only show email if opted-in */}
                       {resident.show_email && resident.email && (
-                        <div className="flex items-center gap-2 text-white/80 text-sm">
+                        <div className="flex items-center gap-2 text-sm text-white/80">
                           <Mail className="h-4 w-4 text-seafoam" />
-                          <a href={`mailto:${resident.email}`} className="hover:text-seafoam transition-colors">
+                          <a
+                            href={`mailto:${resident.email}`}
+                            className="transition-colors hover:text-seafoam"
+                          >
                             {resident.email}
                           </a>
                         </div>
@@ -335,16 +337,19 @@ const Directory = () => {
 
                       {/* Only show phone if opted-in and present */}
                       {resident.show_phone && resident.phone && (
-                        <div className="flex items-center gap-2 text-white/80 text-sm">
+                        <div className="flex items-center gap-2 text-sm text-white/80">
                           <Phone className="h-4 w-4 text-seafoam" />
-                          <a href={`tel:${resident.phone}`} className="hover:text-seafoam transition-colors">
+                          <a
+                            href={`tel:${resident.phone}`}
+                            className="transition-colors hover:text-seafoam"
+                          >
                             {resident.phone}
                           </a>
                         </div>
                       )}
 
                       {!resident.show_email && !resident.show_phone && (
-                        <div className="flex items-center gap-2 text-white/60 text-sm italic">
+                        <div className="flex items-center gap-2 text-sm italic text-white/60">
                           <User className="h-4 w-4" />
                           <span>Contact info private</span>
                         </div>
@@ -354,14 +359,15 @@ const Directory = () => {
 
                   {/* Profile Picture Status */}
                   <div className="flex-shrink-0">
-                    {resident.profile_picture_url && resident.profile_picture_status === 'approved' ? (
-                      <div className="flex items-center gap-1 text-green-400 text-xs">
-                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                    {resident.profile_picture_url &&
+                    resident.profile_picture_status === 'approved' ? (
+                      <div className="flex items-center gap-1 text-xs text-green-400">
+                        <div className="h-2 w-2 rounded-full bg-green-400"></div>
                         <span>Photo Verified</span>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1 text-white/50 text-xs">
-                        <div className="w-2 h-2 bg-white/30 rounded-full"></div>
+                      <div className="flex items-center gap-1 text-xs text-white/50">
+                        <div className="h-2 w-2 rounded-full bg-white/30"></div>
                         <span>Default Avatar</span>
                       </div>
                     )}
@@ -373,9 +379,10 @@ const Directory = () => {
         )}
 
         {/* Privacy Notice */}
-        <div className="mt-8 p-4 bg-white/5 rounded-lg">
-          <p className="text-white/60 text-sm text-center">
-            This directory only shows residents who have opted in. Contact information and profile pictures are displayed based on individual privacy preferences.
+        <div className="mt-8 rounded-lg bg-white/5 p-4">
+          <p className="text-center text-sm text-white/60">
+            This directory only shows residents who have opted in. Contact information and profile
+            pictures are displayed based on individual privacy preferences.
           </p>
         </div>
       </motion.div>
@@ -387,7 +394,7 @@ const Directory = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
             onClick={() => setExpandedResident(null)}
           >
             <motion.div
@@ -400,7 +407,7 @@ const Directory = () => {
               {/* Close button */}
               <button
                 onClick={() => setExpandedResident(null)}
-                className="absolute -top-4 -right-4 w-8 h-8 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors z-10"
+                className="absolute -right-4 -top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
               >
                 <X className="h-4 w-4" />
               </button>

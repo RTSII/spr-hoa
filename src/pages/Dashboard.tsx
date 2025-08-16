@@ -15,7 +15,7 @@ import {
   Sun,
   Moon,
   Droplets,
-  Wind
+  Wind,
 } from 'lucide-react'
 import OwnerInbox from '@/components/OwnerInbox'
 import ProfileCard from '@/components/ProfileCard'
@@ -44,7 +44,7 @@ const Dashboard = () => {
       icon: Calendar,
       color: 'from-purple-500 via-violet-600 to-indigo-600',
       position: { top: '20%', left: '15%' },
-      delay: 0.1
+      delay: 0.1,
     },
     {
       id: 'directory',
@@ -54,7 +54,7 @@ const Dashboard = () => {
       icon: Users,
       color: 'from-blue-500 via-cyan-600 to-teal-600',
       position: { top: '15%', right: '20%' },
-      delay: 0.2
+      delay: 0.2,
     },
     {
       id: 'forms',
@@ -64,7 +64,7 @@ const Dashboard = () => {
       icon: FileText,
       color: 'from-teal-500 via-emerald-600 to-green-600',
       position: { bottom: '35%', right: '15%' },
-      delay: 0.3
+      delay: 0.3,
     },
     {
       id: 'photos',
@@ -74,7 +74,7 @@ const Dashboard = () => {
       icon: Camera,
       color: 'from-fuchsia-500 via-pink-600 to-rose-600',
       position: { bottom: '20%', left: '20%' },
-      delay: 0.4
+      delay: 0.4,
     },
     {
       id: 'community',
@@ -84,7 +84,7 @@ const Dashboard = () => {
       icon: MessageSquare,
       color: 'from-indigo-500 via-purple-600 to-pink-600',
       position: { top: '45%', left: '10%' },
-      delay: 0.5
+      delay: 0.5,
     },
     {
       id: 'news',
@@ -94,15 +94,15 @@ const Dashboard = () => {
       icon: Newspaper,
       color: 'from-cyan-500 via-blue-600 to-indigo-600',
       position: { top: '50%', right: '12%' },
-      delay: 0.6
-    }
+      delay: 0.6,
+    },
   ]
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
-      hour12: true
+      hour12: true,
     })
   }
 
@@ -111,12 +111,12 @@ const Dashboard = () => {
       weekday: 'long',
       month: 'long',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
     })
   }
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="relative min-h-screen overflow-hidden">
       {/* Dynamic Background with Multiple Layers */}
       <div className="absolute inset-0">
         {/* Base gradient */}
@@ -127,32 +127,32 @@ const Dashboard = () => {
           className="absolute inset-0 bg-cover bg-center opacity-20"
           style={{
             backgroundImage: `url('${aerialViewImg}')`,
-            filter: 'blur(1px)'
+            filter: 'blur(1px)',
           }}
         ></div>
 
         {/* Animated gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/40 via-blue-900/30 to-fuchsia-900/40 animate-pulse"></div>
+        <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-purple-900/40 via-blue-900/30 to-fuchsia-900/40"></div>
 
         {/* Floating particles */}
         <div className="absolute inset-0">
           {Array.from({ length: 20 }).map((_, i) => (
             <motion.div
               key={i}
-              className="absolute w-2 h-2 bg-white/20 rounded-full"
+              className="absolute h-2 w-2 rounded-full bg-white/20"
               animate={{
                 x: [0, 100, 0],
                 y: [0, -100, 0],
-                opacity: [0.2, 0.8, 0.2]
+                opacity: [0.2, 0.8, 0.2],
               }}
               transition={{
                 duration: 8 + Math.random() * 4,
                 repeat: Infinity,
-                delay: Math.random() * 8
+                delay: Math.random() * 8,
               }}
               style={{
                 left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`
+                top: `${Math.random() * 100}%`,
               }}
             />
           ))}
@@ -165,17 +165,17 @@ const Dashboard = () => {
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="backdrop-blur-xl bg-white/5 border-b border-white/10 p-4"
+          className="border-b border-white/10 bg-white/5 p-4 backdrop-blur-xl"
         >
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="mx-auto flex max-w-7xl items-center justify-between">
             <div className="flex items-center space-x-6">
               <div className="flex items-center space-x-2">
                 <Sun className="h-5 w-5 text-yellow-400" />
-                <span className="text-white/80 text-sm">78°F • Partly Cloudy</span>
+                <span className="text-sm text-white/80">78°F • Partly Cloudy</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Wind className="h-4 w-4 text-blue-300" />
-                <span className="text-white/70 text-sm">12 mph</span>
+                <span className="text-sm text-white/70">12 mph</span>
               </div>
             </div>
 
@@ -189,19 +189,20 @@ const Dashboard = () => {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowInbox(!showInbox)}
-                className="relative p-2 rounded-full bg-white/10 border border-white/20 hover:bg-white/20 transition-all"
+                className="relative rounded-full border border-white/20 bg-white/10 p-2 transition-all hover:bg-white/20"
               >
                 <Bell className="h-5 w-5 text-white" />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-fuchsia-500 rounded-full animate-pulse"></div>
+                <div className="absolute -right-1 -top-1 h-3 w-3 animate-pulse rounded-full bg-fuchsia-500"></div>
               </motion.button>
 
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setShowProfile(!showProfile)}
-                className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold border-2 border-white/30"
+                className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-white/30 bg-gradient-to-br from-purple-500 to-pink-500 font-bold text-white"
               >
-                {profile?.first_name?.[0]}{profile?.last_name?.[0]}
+                {profile?.first_name?.[0]}
+                {profile?.last_name?.[0]}
               </motion.button>
             </div>
           </div>
@@ -212,23 +213,23 @@ const Dashboard = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="text-center py-16 px-4"
+          className="px-4 py-16 text-center"
         >
           <motion.h1
-            className="text-6xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white via-blue-200 to-purple-200 bg-clip-text text-transparent"
+            className="mb-6 bg-gradient-to-r from-white via-blue-200 to-purple-200 bg-clip-text text-6xl font-bold text-transparent md:text-7xl"
             animate={{
-              backgroundPosition: ['0%', '100%', '0%']
+              backgroundPosition: ['0%', '100%', '0%'],
             }}
             transition={{
               duration: 8,
               repeat: Infinity,
-              ease: "easeInOut"
+              ease: 'easeInOut',
             }}
           >
             Welcome Home
           </motion.h1>
           <motion.p
-            className="text-2xl text-white/80 mb-4"
+            className="mb-4 text-2xl text-white/80"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 }}
@@ -248,7 +249,7 @@ const Dashboard = () => {
         </motion.div>
 
         {/* Feature Navigation Constellation */}
-        <div className="relative h-96 mx-auto max-w-6xl">
+        <div className="relative mx-auto h-96 max-w-6xl">
           {features.map((feature) => {
             const IconComponent = feature.icon
             return (
@@ -256,7 +257,7 @@ const Dashboard = () => {
                 key={feature.id}
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: feature.delay, type: "spring", stiffness: 100 }}
+                transition={{ delay: feature.delay, type: 'spring', stiffness: 100 }}
                 className="absolute"
                 style={feature.position}
                 onMouseEnter={() => setActiveFeature(feature.id)}
@@ -267,40 +268,34 @@ const Dashboard = () => {
                     whileHover={{
                       scale: 1.15,
                       rotateY: 15,
-                      z: 50
+                      z: 50,
                     }}
                     whileTap={{ scale: 0.95 }}
-                    className={`
-                      relative w-32 h-32 rounded-3xl backdrop-blur-xl border border-white/20
-                      bg-gradient-to-br ${feature.color} p-1
-                      shadow-2xl hover:shadow-3xl transition-all duration-500
-                      group cursor-pointer
-                    `}
+                    className={`relative h-32 w-32 rounded-3xl border border-white/20 bg-gradient-to-br backdrop-blur-xl ${feature.color} hover:shadow-3xl group cursor-pointer p-1 shadow-2xl transition-all duration-500`}
                     style={{
-                      boxShadow: activeFeature === feature.id
-                        ? '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 30px rgba(168, 85, 247, 0.4)'
-                        : '0 10px 25px -3px rgba(0, 0, 0, 0.3)'
+                      boxShadow:
+                        activeFeature === feature.id
+                          ? '0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 30px rgba(168, 85, 247, 0.4)'
+                          : '0 10px 25px -3px rgba(0, 0, 0, 0.3)',
                     }}
                   >
                     {/* Inner glow */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent rounded-3xl"></div>
+                    <div className="absolute inset-0 rounded-3xl bg-gradient-to-br from-white/20 to-transparent"></div>
 
                     {/* Content */}
-                    <div className="relative h-full flex flex-col items-center justify-center text-center p-4">
+                    <div className="relative flex h-full flex-col items-center justify-center p-4 text-center">
                       <motion.div
                         animate={activeFeature === feature.id ? { rotate: 360 } : {}}
                         transition={{ duration: 0.8 }}
                       >
-                        <IconComponent className="h-8 w-8 text-white mb-2" />
+                        <IconComponent className="mb-2 h-8 w-8 text-white" />
                       </motion.div>
-                      <h3 className="text-white font-bold text-sm mb-1">{feature.title}</h3>
-                      <p className="text-white/70 text-xs">{feature.description}</p>
+                      <h3 className="mb-1 text-sm font-bold text-white">{feature.title}</h3>
+                      <p className="text-xs text-white/70">{feature.description}</p>
                     </div>
 
                     {/* Hover overlay */}
-                    <motion.div
-                      className="absolute inset-0 bg-white/10 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    />
+                    <motion.div className="absolute inset-0 rounded-3xl bg-white/10 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                   </motion.div>
                 </Link>
 
@@ -311,10 +306,10 @@ const Dashboard = () => {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 10 }}
-                      className="absolute top-full left-1/2 transform -translate-x-1/2 mt-4 px-3 py-2 bg-black/80 text-white text-sm rounded-lg whitespace-nowrap backdrop-blur-sm border border-white/20"
+                      className="absolute left-1/2 top-full mt-4 -translate-x-1/2 transform whitespace-nowrap rounded-lg border border-white/20 bg-black/80 px-3 py-2 text-sm text-white backdrop-blur-sm"
                     >
                       Click to explore {feature.title}
-                      <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-2 h-2 bg-black/80 rotate-45 border-l border-t border-white/20"></div>
+                      <div className="absolute bottom-full left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 transform border-l border-t border-white/20 bg-black/80"></div>
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -323,7 +318,7 @@ const Dashboard = () => {
           })}
 
           {/* Central connecting lines (constellation effect) */}
-          <svg className="absolute inset-0 w-full h-full pointer-events-none">
+          <svg className="pointer-events-none absolute inset-0 h-full w-full">
             <defs>
               <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" style={{ stopColor: 'rgba(168, 85, 247, 0.3)' }} />
@@ -356,14 +351,14 @@ const Dashboard = () => {
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 }}
-          className="max-w-6xl mx-auto px-4 py-16"
+          className="mx-auto max-w-6xl px-4 py-16"
         >
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
             {[
               { label: 'Total Units', value: '165', icon: '🏠' },
               { label: 'Active Events', value: '3', icon: '📅' },
               { label: 'Pool Status', value: 'Open', icon: '🏊‍♀️' },
-              { label: 'Beach Access', value: '24/7', icon: '🏖️' }
+              { label: 'Beach Access', value: '24/7', icon: '🏖️' },
             ].map((stat, index) => (
               <motion.div
                 key={stat.label}
@@ -372,19 +367,19 @@ const Dashboard = () => {
                 transition={{ delay: 1 + index * 0.1 }}
                 whileHover={{
                   scale: 1.05,
-                  rotateY: 10
+                  rotateY: 10,
                 }}
-                className="backdrop-blur-xl bg-gradient-to-br from-white/10 to-white/5 rounded-2xl p-6 border border-white/20 text-center group"
+                className="group rounded-2xl border border-white/20 bg-gradient-to-br from-white/10 to-white/5 p-6 text-center backdrop-blur-xl"
               >
                 <motion.div
-                  className="text-3xl mb-2"
+                  className="mb-2 text-3xl"
                   animate={{ rotate: [0, 10, -10, 0] }}
                   transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
                 >
                   {stat.icon}
                 </motion.div>
-                <div className="text-2xl font-bold text-white mb-1">{stat.value}</div>
-                <div className="text-white/70 text-sm">{stat.label}</div>
+                <div className="mb-1 text-2xl font-bold text-white">{stat.value}</div>
+                <div className="text-sm text-white/70">{stat.label}</div>
               </motion.div>
             ))}
           </div>
@@ -398,17 +393,17 @@ const Dashboard = () => {
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed top-0 right-0 h-full w-96 backdrop-blur-xl bg-slate-900/95 border-l border-white/20 z-50 overflow-y-auto"
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed right-0 top-0 z-50 h-full w-96 overflow-y-auto border-l border-white/20 bg-slate-900/95 backdrop-blur-xl"
           >
             <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
+              <div className="mb-6 flex items-center justify-between">
                 <h2 className="text-xl font-bold text-white">Messages</h2>
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setShowInbox(false)}
-                  className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                  className="rounded-full p-2 transition-colors hover:bg-white/10"
                 >
                   <ChevronRight className="h-5 w-5 text-white" />
                 </motion.button>
@@ -426,22 +421,22 @@ const Dashboard = () => {
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
-            transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed top-0 right-0 h-full w-96 backdrop-blur-xl bg-slate-900/95 border-l border-white/20 z-50 overflow-y-auto"
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed right-0 top-0 z-50 h-full w-96 overflow-y-auto border-l border-white/20 bg-slate-900/95 backdrop-blur-xl"
           >
             <div className="p-6">
-              <div className="flex items-center justify-between mb-6">
+              <div className="mb-6 flex items-center justify-between">
                 <h2 className="text-xl font-bold text-white">Profile</h2>
                 <motion.button
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => setShowProfile(false)}
-                  className="p-2 rounded-full hover:bg-white/10 transition-colors"
+                  className="rounded-full p-2 transition-colors hover:bg-white/10"
                 >
                   <ChevronRight className="h-5 w-5 text-white" />
                 </motion.button>
               </div>
-              <div className="scale-75 origin-top">
+              <div className="origin-top scale-75">
                 <ProfileCard
                   name={`${profile?.first_name} ${profile?.last_name}`}
                   title={`Unit ${profile?.unit_number} Owner`}
@@ -468,7 +463,7 @@ const Dashboard = () => {
               setShowInbox(false)
               setShowProfile(false)
             }}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
           />
         )}
       </AnimatePresence>

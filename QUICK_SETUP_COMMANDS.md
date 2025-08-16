@@ -3,6 +3,7 @@
 ## 📋 Copy-Paste Ready Commands
 
 ### 1. Database Verification Query
+
 Copy and paste this into Supabase SQL Editor to verify setup:
 
 ```sql
@@ -37,6 +38,7 @@ ORDER BY routine_name;
 ```
 
 ### 2. Email Service Deployment Commands
+
 ```bash
 # Install Supabase CLI (if needed)
 npm install -g supabase
@@ -61,6 +63,7 @@ supabase functions list
 ```
 
 ### 3. Test Message Send
+
 Copy and paste this into Supabase SQL Editor to send a test message:
 
 ```sql
@@ -85,6 +88,7 @@ LIMIT 1;
 ```
 
 ### 4. Quick System Status Check
+
 ```sql
 -- Complete system status check
 SELECT
@@ -129,12 +133,14 @@ FROM user_notification_preferences;
 ## 🎯 Where to Find Your Project Info
 
 ### Supabase Project Reference ID
+
 1. Go to https://supabase.com/dashboard/projects
 2. Click on your SPR-HOA project
 3. Look at the URL: `https://supabase.com/dashboard/project/YOUR_PROJECT_REF`
 4. Your project ref is the part after `/project/`
 
 ### Your User ID (for testing)
+
 1. In Supabase dashboard, go to Authentication → Users
 2. Find your admin user (rtsii10@gmail.com)
 3. Copy the UUID from the "id" column
@@ -144,13 +150,14 @@ FROM user_notification_preferences;
 ## 🔧 Admin Dashboard Integration
 
 ### Add to your Admin Dashboard Component
+
 ```tsx
 // Add these imports at the top
-import AdminMessaging from '@/components/AdminMessaging';
-import MessagingTestComponent from '@/components/MessagingTestComponent';
+import AdminMessaging from '@/components/AdminMessaging'
+import MessagingTestComponent from '@/components/MessagingTestComponent'
 
 // Add this section to your admin dashboard JSX
-<div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+;<div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
   {/* Messaging Test */}
   <div className="glass-card p-6">
     <MessagingTestComponent />
@@ -168,6 +175,7 @@ import MessagingTestComponent from '@/components/MessagingTestComponent';
 ## 📧 Email Testing Commands
 
 ### Test Email Function Directly
+
 ```bash
 # Test the Edge Function (replace with your project info)
 curl -X POST 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/send-email' \
@@ -181,6 +189,7 @@ curl -X POST 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/send-email' \
 ```
 
 ### Check Email Logs
+
 ```sql
 -- Check recent email activity
 SELECT
@@ -199,6 +208,7 @@ LIMIT 10;
 ## 🚨 Quick Fixes
 
 ### If Tables Don't Create
+
 ```sql
 -- Check permissions
 SELECT has_table_privilege('site_messages', 'SELECT');
@@ -207,6 +217,7 @@ SELECT has_table_privilege('site_messages', 'SELECT');
 ```
 
 ### If Functions Don't Work
+
 ```sql
 -- Check if http extension is enabled
 SELECT * FROM pg_extension WHERE extname = 'http';
@@ -216,6 +227,7 @@ CREATE EXTENSION IF NOT EXISTS http;
 ```
 
 ### If Email Function Fails
+
 ```bash
 # Check function logs
 supabase functions logs send-email

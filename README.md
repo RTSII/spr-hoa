@@ -5,6 +5,7 @@ A premium web portal exclusively for owners at Sandpiper Run, a luxury oceanfron
 ## Features
 
 **2025-08-09 Update:**
+
 - All critical TypeScript and React lint errors are now resolved in ProfileCard, Directory, OwnerInbox, and related files
 - The luxury ProfileCard thumbnail and expanded modal are fully integrated and error-free in the Resident Directory
 - The codebase is ready for production, documentation updates, and onboarding flow finalization
@@ -23,20 +24,24 @@ A premium web portal exclusively for owners at Sandpiper Run, a luxury oceanfron
 ## CSS/Tailwind/Styling Not Loading? (2025-08-11)
 
 ### Issue
+
 After some edits, the local dev server (localhost) was not loading any custom CSS/Tailwind styling—only browser defaults appeared. This was due to either a missing or broken stylesheet injection from Vite, usually caused by:
+
 - Incorrect or missing import of `index.css` in `main.tsx`
 - Syntax errors in Tailwind/CSS files
 - Corrupted Vite cache or build artifacts
-- Misconfiguration in `vite.config.js`, `tailwind.config.js`, or `postcss.config.js`
+- Misconfiguration in `vite.config.ts`, `tailwind.config.js`, or `postcss.config.js`
 
 ### Solution Steps
+
 1. **Verify** `index.css` is imported in `main.tsx`.
-2. **Check** all config files (`vite.config.js`, `tailwind.config.js`, `postcss.config.js`) for typos or misconfigurations after any dependency or config change.
-3. **Clear build artifacts**: Delete `.vite`, `dist`, `node_modules`, and lock files, then reinstall dependencies and restart the dev server.
+2. **Check** all config files (`vite.config.ts`, `tailwind.config.js`, `postcss.config.js`) for typos or misconfigurations after any dependency or config change.
+3. **Clear build artifacts**: Delete `node_modules/.vite`, `dist`, `node_modules`, and lock files, then reinstall dependencies and restart the dev server.
 4. **Fix silent CSS errors**: Even a single typo in a Tailwind or custom CSS file can prevent the stylesheet from loading. Check for errors in your editor or terminal.
 5. **Restart** the dev server after any major change.
 
 ### Prevention Tips
+
 - After any edit to config or dependencies, always:
   - Re-check your CSS import and config files
   - Clear Vite cache and rebuild if styles suddenly disappear
@@ -48,6 +53,7 @@ After some edits, the local dev server (localhost) was not loading any custom CS
 ## AI Agent QA & Feature Verification
 
 Whenever new features, major changes, or new pages are introduced, the AI Agent (Cascade) must:
+
 - Fully test and verify all new functionality using the full scope of its tools.
 - Access the Windsurf Chrome Browser to load, inspect, and interact with all relevant pages.
 - Simulate realistic user flows (registration, login, onboarding, directory, inbox, etc.) using test data as needed.
@@ -60,7 +66,6 @@ This process should be performed for every major update, and results should be d
 
 ---
 
-
 - **Secure Authentication**: Unit number and HOA account verification system
 - **Dashboard**: Personalized home page with quick access to all features
 - **Calendar**: Interactive community calendar with events and activities
@@ -72,12 +77,14 @@ This process should be performed for every major update, and results should be d
 
 ## Tech Stack
 
-- **Frontend**: React with TypeScript
-- **Styling**: Tailwind CSS with custom coastal theme
-- **Database**: Supabase
+- **Frontend**: React 18 with TypeScript
+- **Bundler**: Vite 5
+- **Styling**: Tailwind CSS 3 with PostCSS + Autoprefixer and custom coastal theme
+- **UI/Icons**: lucide-react
+- **Database**: Supabase (Postgres + RLS)
 - **Authentication**: Supabase Auth
-- **Routing**: React Router
-- **Animations**: Framer Motion
+- **Routing**: React Router v6
+- **Animations**: Framer Motion + GSAP
 - **Forms**: React Hook Form
 - **AI Integration**: Supermemory.ai
 
@@ -85,27 +92,30 @@ This process should be performed for every major update, and results should be d
 
 ### Prerequisites
 
-- Node.js (v16 or higher)
-- npm or yarn
+- Node.js (v18 or higher)
+- Yarn (preferred on Windows)
 - Supabase account
 
 ### Installation
 
 1. Clone the repository
 2. Navigate to the project directory:
+
    ```bash
    cd sandpiper-portal
    ```
 
 3. Install dependencies:
+
    ```bash
-   npm install
+   yarn install
    ```
 
 4. Copy the SPR logo to the assets folder:
    - Place `spr_logo.jpg` in `src/assets/images/`
 
 5. Create a `.env` file in the root directory:
+
    ```env
    VITE_SUPABASE_URL=your_supabase_url
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
@@ -132,21 +142,24 @@ This process should be performed for every major update, and results should be d
   ```
 
 ### Onboarding Flow
+
 - Owners register with their unit number and last 4 digits of their HOA account number (must match `owners_master` table and account must start with '7').
 - The onboarding validation is performed by the `validate_owner_onboarding` Supabase function.
 
 ### Project Cleanliness
-- All old SQL setup files have been removed for clarity and maintainability.
-- Use only `spr_hoa_unified_setup.sql` for future database setup or migrations.
+
+- Legacy SQL scripts remain in the repo for reference (e.g., `PHOTO_MANAGEMENT_SETUP.sql`, `admin_features_setup.sql`), but prefer `spr_hoa_unified_setup.sql` for end-to-end setup and future migrations.
+- Use only `spr_hoa_unified_setup.sql` for new environments; other SQL files support specific features and can be applied as needed.
 
 7. Run the development server:
    ```bash
-   npm run dev
+   yarn dev
    ```
 
 ## Database Schema
 
 ### owners_master
+
 - `id` (uuid, primary key)
 - `unit_number` (text, unique)
 - `hoa_account_number` (text)
@@ -154,6 +167,7 @@ This process should be performed for every major update, and results should be d
 - `created_at` (timestamp)
 
 ### owner_profiles
+
 - `id` (uuid, primary key)
 - `user_id` (uuid, foreign key to auth.users)
 - `unit_number` (text)
@@ -169,7 +183,7 @@ This process should be performed for every major update, and results should be d
 
 - **Primary Color**: Royal Blue (#003366)
 - **Accent Color**: Seafoam (#7FCDCD)
-- **Typography**: 
+- **Typography**:
   - Headers: Playfair Display
   - Body: Inter
 - **Effects**: Glass-morphism with backdrop blur
@@ -179,16 +193,16 @@ This process should be performed for every major update, and results should be d
 
 ```bash
 # Run development server
-npm run dev
+yarn dev
 
 # Build for production
-npm run build
+yarn build
 
 # Preview production build
-npm run preview
+yarn preview
 
 # Type checking
-npm run lint
+yarn lint
 ```
 
 ## License

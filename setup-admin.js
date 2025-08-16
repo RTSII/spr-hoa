@@ -2,36 +2,36 @@
 // Run this in your browser console after logging into the portal
 
 async function setupAdmin() {
-  console.log('🔧 Setting up admin access...');
+  console.log('🔧 Setting up admin access...')
 
   try {
     // Get current user
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
 
     if (!user) {
-      console.error('❌ No user logged in. Please log in first.');
-      return;
+      console.error('❌ No user logged in. Please log in first.')
+      return
     }
 
-    console.log('✅ Found user:', user.email);
-    console.log('📋 User ID:', user.id);
+    console.log('✅ Found user:', user.email)
+    console.log('📋 User ID:', user.id)
 
     // Make this user an admin
-    const { error } = await supabase
-      .from('admin_users')
-      .insert({
-        user_id: user.id,
-        role: 'admin'
-      });
+    const { error } = await supabase.from('admin_users').insert({
+      user_id: user.id,
+      role: 'admin',
+    })
 
     if (error) {
       if (error.code === '23505') {
-        console.log('ℹ️ User is already an admin');
+        console.log('ℹ️ User is already an admin')
       } else {
-        console.error('❌ Error making admin:', error);
+        console.error('❌ Error making admin:', error)
       }
     } else {
-      console.log('✅ Successfully made user admin');
+      console.log('✅ Successfully made user admin')
     }
 
     // Verify admin status
@@ -39,14 +39,13 @@ async function setupAdmin() {
       .from('admin_users')
       .select('role')
       .eq('user_id', user.id)
-      .single();
+      .single()
 
     if (adminData) {
-      console.log('✅ Admin confirmed with role:', adminData.role);
+      console.log('✅ Admin confirmed with role:', adminData.role)
     }
-
   } catch (error) {
-    console.error('❌ Setup failed:', error);
+    console.error('❌ Setup failed:', error)
   }
 }
 

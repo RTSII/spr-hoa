@@ -45,18 +45,21 @@ FROM site_messages;
 ## Component Integration Verification
 
 ### ✅ Admin Dashboard
+
 - [ ] AdminMessaging component added to AdminDashboard.tsx
 - [ ] MessagingTestComponent added to AdminDashboard.tsx
 - [ ] New admin features visible in constellation view
 - [ ] Components load without console errors
 
 ### ✅ Profile Page
+
 - [ ] OwnerInbox component displays in Profile → My Messages
 - [ ] Messages load properly for residents
 - [ ] Read/unread functionality works
 - [ ] Archive functionality works
 
 ### ✅ Photo Rejection Integration
+
 - [ ] Photo rejections create site inbox messages
 - [ ] Rejection messages include proper metadata
 - [ ] Email notifications send (if email service deployed)
@@ -64,6 +67,7 @@ FROM site_messages;
 ## Quick Test Workflow
 
 ### 1. Admin Messaging Test
+
 1. **Login as admin** (rtsii10@gmail.com)
 2. **Navigate to Admin Dashboard**
 3. **Click "Send Messages" feature** in the constellation
@@ -72,6 +76,7 @@ FROM site_messages;
 6. **Verify message appears** in resident's Profile → My Messages
 
 ### 2. Photo Rejection Test
+
 1. **Login as regular user**
 2. **Upload a photo** (profile or community)
 3. **Login as admin** and reject with reason
@@ -79,6 +84,7 @@ FROM site_messages;
 5. **Verify email sent** (if email service configured)
 
 ### 3. Email Service Test (Optional)
+
 ```bash
 # Deploy email service
 ./deploy-email-service.sh
@@ -97,17 +103,20 @@ curl -X POST 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/send-email' \
 ## Success Indicators
 
 ### ✅ Database Ready
+
 - 3 tables created (site_messages, user_notification_preferences, admin_message_templates)
 - 6+ functions available (send_site_message, send_bulk_site_messages, etc.)
 - Test messaging function returns success
 
 ### ✅ Admin Interface Ready
+
 - Admin dashboard loads without errors
 - Messaging features appear in constellation
 - AdminMessaging component functional
 - MessagingTestComponent shows all green
 
 ### ✅ Resident Experience Ready
+
 - Profile page shows "My Messages" section
 - OwnerInbox displays messages properly
 - Photo rejection notifications appear
@@ -116,15 +125,19 @@ curl -X POST 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/send-email' \
 ## Common Issues & Fixes
 
 ### "Table does not exist"
+
 **Fix**: Re-run `sql/complete_messaging_system.sql` in Supabase SQL Editor
 
 ### "Function does not exist"
+
 **Fix**: Ensure all SQL was executed properly, check for syntax errors
 
 ### "Component not found"
+
 **Fix**: Verify import paths are correct in AdminDashboard.tsx
 
 ### "Email not working"
+
 **Fix**: Run `./deploy-email-service.sh` and set Resend API key
 
 ---

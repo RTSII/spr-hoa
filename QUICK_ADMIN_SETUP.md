@@ -5,6 +5,7 @@
 Since the automated script requires service role permissions, here's the quick manual setup:
 
 ### Step 1: Access Supabase SQL Editor
+
 1. Go to your **Supabase Dashboard**
 2. Click **SQL Editor** in the sidebar
 3. Click **New Query**
@@ -238,6 +239,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 ```
 
 ### Step 3: Run the SQL
+
 1. **Paste the SQL** into the Supabase SQL Editor
 2. **Click "RUN"** to execute
 3. You should see "Success. No rows returned" (this is normal)
@@ -245,23 +247,27 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 ## ✅ Test Admin Features
 
 ### 1. Login to Admin Dashboard
+
 - Navigate to your app
 - Login with: `rtsii10@gmail.com` / `basedgod`
 - You should be redirected to the admin dashboard
 
 ### 2. Test Message Center
+
 - Click **"Message Center"** from the constellation
 - Type a test emergency alert
 - Click **"Send Emergency Alert"**
 - The message should be saved and appear in recent messages below
 
 ### 3. Admin Stats Should Work
+
 - The stats at the bottom should now show real data
 - Numbers will be low initially but should not be "0" errors
 
 ## 🎯 Quick Verification
 
 If setup is successful, you should see:
+
 - ✅ Admin dashboard loads without errors
 - ✅ Message center allows sending alerts
 - ✅ Recent messages appear after sending
@@ -285,14 +291,17 @@ To test the profile picture approval workflow:
 ## 🔧 If Issues Occur
 
 ### Tables Already Exist Error
+
 - This is fine! Skip the CREATE TABLE statements
 - Run only the functions (get_admin_dashboard_stats and send_admin_message)
 
 ### Permission Errors
+
 - Make sure you're using the Supabase SQL Editor
 - Don't run from command line unless you have service role setup
 
 ### Admin Dashboard Not Loading
+
 - Clear browser cache and refresh
 - Check browser console for errors
 - Verify you're logged in as admin

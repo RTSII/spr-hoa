@@ -114,15 +114,18 @@ If you're setting up the system for the first time:
 ## Troubleshooting
 
 ### Photo Upload Failures
+
 - Ensure the file is under the size limit (10MB)
 - Check that the file type is supported (JPG, PNG, GIF)
 - Verify your internet connection
 
 ### Missing Admin Controls
+
 - Confirm the admin user is properly set up in the admin_users table
 - Check that all SQL functions and policies are correctly installed
 
 ### Photos Not Appearing After Approval
+
 - Verify the storage bucket permissions are correctly configured
 - Ensure the photo URL is properly stored in the database
 - Check browser cache or try refreshing the page

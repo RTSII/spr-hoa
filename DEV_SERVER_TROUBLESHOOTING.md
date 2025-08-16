@@ -3,60 +3,63 @@
 ## [2025-08-11] CSS/Tailwind/Styling Not Loading on Localhost? (Resolved)
 
 ### Issue
+
 After certain edits, the app loaded with only browser default styles—no Tailwind or custom CSS. This was due to Vite not injecting the stylesheet, often caused by:
+
 - Missing or broken `index.css` import in `main.tsx`
 - Syntax errors in Tailwind or custom CSS
 - Corrupted Vite cache or build artifacts
-- Config errors in `vite.config.js`, `tailwind.config.js`, or `postcss.config.js`
+- Config errors in `vite.config.ts`, `tailwind.config.js`, or `postcss.config.js`
 
 ### Solution
+
 1. Verify `index.css` is imported in `main.tsx`.
 2. Check all config files for typos or misconfigurations after any dependency or config change.
-3. Delete `.vite`, `dist`, `node_modules`, and lock files, then reinstall dependencies and restart the dev server.
+3. Delete `node_modules/.vite`, `dist`, and `node_modules`, then reinstall dependencies with Yarn and restart the dev server.
 4. Fix any CSS/Tailwind syntax errors—these can silently break stylesheet injection.
 5. Always restart the dev server after major changes.
 
 ### Prevention Tips
+
 - After editing config or dependencies, always check CSS imports and configs, and clear Vite cache if styles disappear.
 - Use your editor’s error highlighting for CSS/Tailwind.
 - If styles are missing, check browser dev tools for stylesheet loading and restart the dev server if needed.
 
-
 ## The Issue
-The development server is having trouble with rollup dependencies on Windows. This is a known issue with npm and optional dependencies.
+
+The development server can have trouble with rollup/native dependencies on Windows. This is a known issue particularly when using npm.
 
 ## Quick Solutions
 
-### Option 1: Use npx (Recommended)
-Instead of `npm run dev`, use:
+### Option 1: Use Yarn (Recommended)
+
+Prefer Yarn for dependency management and running the dev server on Windows:
+
+```bash
+yarn install
+yarn dev
+```
+
+### Option 2: Use npx vite (Alternate)
+
+If needed, you can bypass scripts and invoke Vite directly:
+
 ```bash
 npx vite
 ```
 
-### Option 2: Install Missing Dependencies
-Try installing the specific rollup dependency:
+### Option 3: Install Missing Dependencies (Last Resort)
+
+Try installing the specific rollup dependency (only if errors mention it):
+
 ```bash
 npm install @rollup/rollup-win32-x64-msvc
 ```
 
-### Option 3: Use Yarn Instead
-If npm continues to have issues:
-```bash
-# Install yarn globally
-npm install -g yarn
-
-# Remove node_modules and package-lock.json
-Remove-Item -Recurse -Force node_modules, package-lock.json
-
-# Install with yarn
-yarn install
-
-# Run dev server
-yarn dev
-```
-
 ### Option 4: Manual Vite Start
+
 Create a new file `start-dev.js`:
+
 ```javascript
 import { createServer } from 'vite'
 
@@ -66,6 +69,7 @@ server.printUrls()
 ```
 
 Then run:
+
 ```bash
 node start-dev.js
 ```

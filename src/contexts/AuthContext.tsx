@@ -53,7 +53,7 @@ type AuthContextType = {
       showPhone: boolean
       showUnit: boolean
       profile_picture_url?: string
-    }
+    },
   ) => Promise<void>
   signOut: () => Promise<void>
   updateProfile: (updates: Partial<Profile>) => Promise<void>
@@ -84,7 +84,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const initAuth = async () => {
       try {
         // Check active sessions
-        const { data: { session } } = await supabase.auth.getSession()
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
 
         if (mounted && session?.user) {
           setUser(session.user)
@@ -103,7 +105,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (!mounted) return
 
       if (session?.user) {
@@ -170,7 +174,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         // Create a mock admin user for demo purposes
         const mockAdminUser = {
           id: 'admin-user-1',
-          email: 'rtsii10@gmail.com'
+          email: 'rtsii10@gmail.com',
         }
 
         setUser(mockAdminUser)
@@ -182,7 +186,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           role: 'admin',
           created_at: new Date().toISOString(),
           last_login_at: new Date().toISOString(),
-          login_count: 42
+          login_count: 42,
         })
         setLoading(false)
 
@@ -216,7 +220,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       showPhone: boolean
       showUnit: boolean
       profile_picture_url?: string
-    }
+    },
   ) => {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -244,8 +248,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         Object.assign(profileInsertData, {
           profile_picture_url: profileData.profile_picture_url,
           profile_picture_status: 'pending',
-          profile_picture_submitted_at: new Date().toISOString()
-        });
+          profile_picture_submitted_at: new Date().toISOString(),
+        })
       }
 
       const { error: profileError } = await supabase
@@ -289,15 +293,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (error) throw error
 
     if (data.user) {
-      const { error: adminError } = await supabase
-        .from('admin_users')
-        .insert({
-          user_id: data.user.id,
-          email: 'rtsii10@gmail.com',
-          role: 'admin',
-          login_count: 1,
-          last_login_at: new Date().toISOString()
-        })
+      const { error: adminError } = await supabase.from('admin_users').insert({
+        user_id: data.user.id,
+        email: 'rtsii10@gmail.com',
+        role: 'admin',
+        login_count: 1,
+        last_login_at: new Date().toISOString(),
+      })
 
       if (adminError) throw adminError
     }

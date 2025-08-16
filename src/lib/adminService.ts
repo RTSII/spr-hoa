@@ -94,7 +94,7 @@ export const adminService = {
       p_message_type: messageData.message_type,
       p_title: messageData.title,
       p_content: messageData.content,
-      p_priority: messageData.priority || 'medium'
+      p_priority: messageData.priority || 'medium',
     })
 
     if (error) throw error
@@ -117,10 +117,12 @@ export const adminService = {
   async getAllUsers() {
     const { data, error } = await supabase
       .from('owner_profiles')
-      .select(`
+      .select(
+        `
         *,
         user:auth.users(email, created_at)
-      `)
+      `,
+      )
       .order('created_at', { ascending: false })
 
     if (error) throw error
@@ -142,11 +144,13 @@ export const adminService = {
   async getPendingPhotoSubmissions() {
     const { data, error } = await supabase
       .from('photo_submissions')
-      .select(`
+      .select(
+        `
         *,
         user:auth.users(email),
         profile:owner_profiles(first_name, last_name, unit_number)
-      `)
+      `,
+      )
       .eq('status', 'pending')
       .order('created_at', { ascending: false })
 
@@ -157,11 +161,13 @@ export const adminService = {
   async getAllPhotoSubmissions() {
     const { data, error } = await supabase
       .from('photo_submissions')
-      .select(`
+      .select(
+        `
         *,
         user:auth.users(email),
         profile:owner_profiles(first_name, last_name, unit_number)
-      `)
+      `,
+      )
       .order('created_at', { ascending: false })
 
     if (error) throw error
@@ -172,13 +178,13 @@ export const adminService = {
     submissionId: string,
     status: 'approved' | 'rejected',
     adminNotes?: string,
-    rejectionReason?: string
+    rejectionReason?: string,
   ) {
     const { data, error } = await supabase.rpc('admin_review_photo', {
       p_submission_id: submissionId,
       p_status: status,
       p_admin_notes: adminNotes,
-      p_rejection_reason: rejectionReason
+      p_rejection_reason: rejectionReason,
     })
 
     if (error) throw error
@@ -189,7 +195,8 @@ export const adminService = {
   async getPendingProfilePictures() {
     const { data, error } = await supabase
       .from('owner_profiles')
-      .select(`
+      .select(
+        `
         id,
         user_id,
         first_name,
@@ -201,7 +208,8 @@ export const adminService = {
         profile_picture_reviewed_at,
         profile_picture_rejection_reason,
         profile_picture_admin_notes
-      `)
+      `,
+      )
       .eq('profile_picture_status', 'pending')
       .order('profile_picture_submitted_at', { ascending: false })
 
@@ -213,13 +221,13 @@ export const adminService = {
     profileId: string,
     status: 'approved' | 'rejected',
     rejectionReason?: string,
-    adminNotes?: string
+    adminNotes?: string,
   ) {
     const { data, error } = await supabase.rpc('admin_review_profile_picture', {
       p_profile_id: profileId,
       p_status: status,
       p_rejection_reason: rejectionReason,
-      p_admin_notes: adminNotes
+      p_admin_notes: adminNotes,
     })
 
     if (error) throw error
@@ -240,7 +248,7 @@ export const adminService = {
       .from('news_posts')
       .insert({
         admin_user_id: (await supabase.auth.getUser()).data.user?.id,
-        ...newsData
+        ...newsData,
       })
       .select()
 
@@ -260,10 +268,7 @@ export const adminService = {
   },
 
   async deleteNewsPost(postId: string) {
-    const { data, error } = await supabase
-      .from('news_posts')
-      .delete()
-      .eq('id', postId)
+    const { data, error } = await supabase.from('news_posts').delete().eq('id', postId)
 
     if (error) throw error
     return data
@@ -284,7 +289,7 @@ export const adminService = {
       .from('news_posts')
       .update({
         status: 'published',
-        published_at: new Date().toISOString()
+        published_at: new Date().toISOString(),
       })
       .eq('id', postId)
       .select()
@@ -307,12 +312,10 @@ export const adminService = {
     action_taken?: string
     metadata?: any
   }) {
-    const { data, error } = await supabase
-      .from('user_activity_logs')
-      .insert({
-        user_id: (await supabase.auth.getUser()).data.user?.id,
-        ...activityData
-      })
+    const { data, error } = await supabase.from('user_activity_logs').insert({
+      user_id: (await supabase.auth.getUser()).data.user?.id,
+      ...activityData,
+    })
 
     if (error) throw error
     return data
@@ -321,11 +324,13 @@ export const adminService = {
   async getUserActivityLogs(limit = 50) {
     const { data, error } = await supabase
       .from('user_activity_logs')
-      .select(`
+      .select(
+        `
         *,
         user:auth.users(email),
         profile:owner_profiles(first_name, last_name, unit_number)
-      `)
+      `,
+      )
       .order('created_at', { ascending: false })
       .limit(limit)
 
@@ -335,10 +340,7 @@ export const adminService = {
 
   // System Settings Functions
   async getSystemSettings() {
-    const { data, error } = await supabase
-      .from('system_settings')
-      .select('*')
-      .order('setting_key')
+    const { data, error } = await supabase.from('system_settings').select('*').order('setting_key')
 
     if (error) throw error
     return data as SystemSetting[]
@@ -349,7 +351,7 @@ export const adminService = {
       .from('system_settings')
       .update({
         setting_value: settingValue,
-        updated_by: (await supabase.auth.getUser()).data.user?.id
+        updated_by: (await supabase.auth.getUser()).data.user?.id,
       })
       .eq('setting_key', settingKey)
       .select()
@@ -370,36 +372,36 @@ export const adminService = {
 
   // Bulk Operations
   async bulkApprovePhotos(submissionIds: string[]) {
-    const promises = submissionIds.map(id =>
-      this.reviewPhotoSubmission(id, 'approved', 'Bulk approved by admin')
+    const promises = submissionIds.map((id) =>
+      this.reviewPhotoSubmission(id, 'approved', 'Bulk approved by admin'),
     )
 
     return Promise.all(promises)
   },
 
   async bulkRejectPhotos(submissionIds: string[], reason: string) {
-    const promises = submissionIds.map(id =>
-      this.reviewPhotoSubmission(id, 'rejected', 'Bulk rejected by admin', reason)
+    const promises = submissionIds.map((id) =>
+      this.reviewPhotoSubmission(id, 'rejected', 'Bulk rejected by admin', reason),
     )
 
     return Promise.all(promises)
   },
 
   async bulkApproveProfilePictures(profileIds: string[]) {
-    const promises = profileIds.map(id =>
-      this.reviewProfilePicture(id, 'approved', undefined, 'Bulk approved by admin')
+    const promises = profileIds.map((id) =>
+      this.reviewProfilePicture(id, 'approved', undefined, 'Bulk approved by admin'),
     )
 
     return Promise.all(promises)
   },
 
   async bulkRejectProfilePictures(profileIds: string[], reason: string) {
-    const promises = profileIds.map(id =>
-      this.reviewProfilePicture(id, 'rejected', reason, 'Bulk rejected by admin')
+    const promises = profileIds.map((id) =>
+      this.reviewProfilePicture(id, 'rejected', reason, 'Bulk rejected by admin'),
     )
 
     return Promise.all(promises)
-  }
+  },
 }
 
 // Utility functions
@@ -408,7 +410,7 @@ export const formatMessageType = (type: AdminMessage['message_type']) => {
     emergency: 'Emergency Alert',
     general: 'General Notice',
     maintenance: 'Maintenance Notice',
-    event: 'Event Announcement'
+    event: 'Event Announcement',
   }
   return types[type] || type
 }
@@ -418,7 +420,7 @@ export const formatPriority = (priority: AdminMessage['priority']) => {
     low: 'Low',
     medium: 'Medium',
     high: 'High',
-    urgent: 'Urgent'
+    urgent: 'Urgent',
   }
   return priorities[priority] || priority
 }
@@ -428,7 +430,7 @@ export const getPriorityColor = (priority: AdminMessage['priority']) => {
     low: 'text-green-400',
     medium: 'text-blue-400',
     high: 'text-orange-400',
-    urgent: 'text-red-400'
+    urgent: 'text-red-400',
   }
   return colors[priority] || 'text-gray-400'
 }

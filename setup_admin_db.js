@@ -53,8 +53,8 @@ async function setupAdminDatabase() {
     // Split the script into individual statements
     const statements = sqlScript
       .split(';')
-      .map(stmt => stmt.trim())
-      .filter(stmt => stmt.length > 0 && !stmt.startsWith('--'))
+      .map((stmt) => stmt.trim())
+      .filter((stmt) => stmt.length > 0 && !stmt.startsWith('--'))
 
     console.log(`📝 Executing ${statements.length} SQL statements...`)
 
@@ -68,10 +68,7 @@ async function setupAdminDatabase() {
 
           if (error) {
             // Try direct query if RPC fails
-            const { error: directError } = await supabase
-              .from('_temp_')
-              .select('1')
-              .limit(0)
+            const { error: directError } = await supabase.from('_temp_').select('1').limit(0)
 
             if (!directError || directError.message.includes('relation "_temp_" does not exist')) {
               // This is expected, continue
@@ -93,7 +90,6 @@ async function setupAdminDatabase() {
     console.log('1. Login to your app with admin credentials: rtsii10@gmail.com / basedgod')
     console.log('2. Test the admin message center and other features')
     console.log('3. The admin dashboard should now have full functionality')
-
   } catch (error) {
     console.error('❌ Setup failed:', error.message)
     console.log('\nTroubleshooting:')
@@ -109,10 +105,7 @@ async function checkConnection() {
 
   try {
     // Simple connection test
-    const { data, error } = await supabase
-      .from('owner_profiles')
-      .select('id')
-      .limit(1)
+    const { data, error } = await supabase.from('owner_profiles').select('id').limit(1)
 
     // If table doesn't exist, that's fine - we'll create it
     if (error && error.message.includes('does not exist')) {

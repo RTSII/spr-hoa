@@ -1,4 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,12 +21,12 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           error: 'Email service not configured',
-          success: false
+          success: false,
         }),
         {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+        },
       )
     }
 
@@ -35,12 +35,12 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           error: 'Missing required fields: to, subject, html',
-          success: false
+          success: false,
         }),
         {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+        },
       )
     }
 
@@ -51,7 +51,7 @@ serve(async (req) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${resendApiKey}`,
+        Authorization: `Bearer ${resendApiKey}`,
       },
       body: JSON.stringify({
         from: from,
@@ -69,12 +69,12 @@ serve(async (req) => {
         JSON.stringify({
           error: 'Failed to send email',
           details: emailResult,
-          success: false
+          success: false,
         }),
         {
           status: emailResponse.status,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+        },
       )
     }
 
@@ -84,25 +84,24 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         messageId: emailResult.id,
-        message: 'Email sent successfully'
+        message: 'Email sent successfully',
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      },
     )
-
   } catch (error) {
     console.error('Error in send-email function:', error)
     return new Response(
       JSON.stringify({
         error: 'Internal server error',
         details: error.message,
-        success: false
+        success: false,
       }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
+      },
     )
   }
 })

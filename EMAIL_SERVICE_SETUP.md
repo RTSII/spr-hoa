@@ -13,17 +13,20 @@ This guide will help you set up the complete email notification system for SPR-H
 ## 📧 Step 1: Resend Setup
 
 ### Create Resend Account
+
 1. Go to [resend.com](https://resend.com) and sign up
 2. Verify your email address
 3. Navigate to the API Keys section
 
 ### Get API Key
+
 1. Click "Create API Key"
 2. Name it "SPR-HOA-Notifications"
 3. Copy the API key (starts with `re_`)
 4. **Important**: Save this key securely - you won't see it again
 
 ### Domain Setup (Optional but Recommended)
+
 1. Go to "Domains" in Resend dashboard
 2. Add your domain (e.g., `sandpiperrun.com`)
 3. Follow DNS verification steps
@@ -32,12 +35,14 @@ This guide will help you set up the complete email notification system for SPR-H
 ## 🔧 Step 2: Deploy Edge Function
 
 ### Install Supabase CLI
+
 ```bash
 # Install Supabase CLI if you haven't already
 npm install -g supabase
 ```
 
 ### Login and Link Project
+
 ```bash
 # Login to Supabase
 supabase login
@@ -47,18 +52,21 @@ supabase link --project-ref YOUR_PROJECT_REF
 ```
 
 ### Set Environment Variables
+
 ```bash
 # Set the Resend API key
 supabase secrets set RESEND_API_KEY=re_your_api_key_here
 ```
 
 ### Deploy the Function
+
 ```bash
 # Deploy the send-email function
 supabase functions deploy send-email
 ```
 
 ### Verify Deployment
+
 ```bash
 # Test that the function is deployed
 supabase functions list
@@ -67,6 +75,7 @@ supabase functions list
 ## 🗄️ Step 3: Database Configuration
 
 ### Update Database Settings
+
 Run this in your Supabase SQL Editor:
 
 ```sql
@@ -78,6 +87,7 @@ CREATE EXTENSION IF NOT EXISTS http;
 ```
 
 ### Update the Email Function
+
 Execute the updated SQL from `send_photo_rejection_email_updated.sql`:
 
 ```bash
@@ -88,6 +98,7 @@ cat sql/send_photo_rejection_email_updated.sql
 ## 🧪 Step 4: Testing
 
 ### Test Email Function Directly
+
 ```bash
 # Test the Edge Function directly
 curl -X POST 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/send-email' \
@@ -101,6 +112,7 @@ curl -X POST 'https://YOUR_PROJECT_REF.supabase.co/functions/v1/send-email' \
 ```
 
 ### Test Database Function
+
 Run this in Supabase SQL Editor:
 
 ```sql
@@ -115,6 +127,7 @@ LIMIT 5;
 ```
 
 ### Test Full Rejection Workflow
+
 1. Upload a photo as a regular user
 2. Log in as admin and reject the photo with a reason
 3. Check that the email was sent (check admin_logs)
@@ -123,6 +136,7 @@ LIMIT 5;
 ## 🛠️ Step 5: Environment Configuration
 
 ### Required Environment Variables
+
 Set these in your Supabase project:
 
 ```bash
@@ -134,6 +148,7 @@ DEFAULT_SENDER_EMAIL=noreply@yourdomain.com
 ```
 
 ### Database Settings
+
 Update these in your database:
 
 ```sql
@@ -164,33 +179,43 @@ SELECT set_config('app.supabase_service_role_key', 'YOUR_SERVICE_ROLE_KEY', fals
 ### Common Issues
 
 #### 1. "RESEND_API_KEY not found"
+
 **Solution**: Set the environment variable:
+
 ```bash
 supabase secrets set RESEND_API_KEY=your_key_here
 ```
 
 #### 2. "HTTP extension not available"
+
 **Solution**: Enable in Supabase dashboard:
+
 - Go to Database → Extensions
 - Search for "http"
 - Enable the extension
 
 #### 3. "Function deployment failed"
+
 **Solution**: Check your CLI setup:
+
 ```bash
 supabase login
 supabase link --project-ref YOUR_PROJECT_REF
 ```
 
 #### 4. "Email not received"
+
 **Solutions**:
+
 - Check spam folder
 - Verify Resend API key is correct
 - Check admin_logs table for error details
 - Ensure sender domain is verified in Resend
 
 #### 5. "Permission denied calling function"
+
 **Solution**: Update the database settings:
+
 ```sql
 SELECT set_config('app.supabase_service_role_key', 'YOUR_SERVICE_ROLE_KEY', false);
 ```
@@ -198,11 +223,13 @@ SELECT set_config('app.supabase_service_role_key', 'YOUR_SERVICE_ROLE_KEY', fals
 ### Debug Steps
 
 1. **Check Function Logs**:
+
    ```bash
    supabase functions logs send-email
    ```
 
 2. **Check Database Logs**:
+
    ```sql
    SELECT * FROM admin_logs
    WHERE log_type LIKE '%email%'
@@ -225,6 +252,7 @@ SELECT set_config('app.supabase_service_role_key', 'YOUR_SERVICE_ROLE_KEY', fals
 ## 📈 Monitoring
 
 ### Track Email Sending
+
 ```sql
 -- View email sending statistics
 SELECT
@@ -239,6 +267,7 @@ ORDER BY date DESC;
 ```
 
 ### Resend Dashboard
+
 - Monitor email delivery rates
 - Track bounces and complaints
 - View sending volume
@@ -257,6 +286,7 @@ Your SPR-HOA portal now has a complete email notification system! 🏖️✉️
 ## 📞 Support
 
 If you encounter issues:
+
 1. Check the troubleshooting section above
 2. Review the Supabase and Resend documentation
 3. Check the admin_logs table for detailed error information

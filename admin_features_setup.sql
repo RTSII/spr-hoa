@@ -271,7 +271,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 -- Insert default system settings
 INSERT INTO system_settings (setting_key, setting_value, description, is_public) VALUES
     ('portal_name', 'Sandpiper Run HOA Portal', 'The display name of the portal', true),
-    ('contact_email', 'admin@sandpiperrun.com', 'Main contact email', true),
+    ('contact_email', 'rob@ursllc.com', 'Main contact email', true),
     ('maintenance_mode', 'false', 'Whether the portal is in maintenance mode', false),
     ('session_timeout_minutes', '30', 'Session timeout in minutes', false),
     ('max_photo_upload_size_mb', '10', 'Maximum photo upload size in MB', false),

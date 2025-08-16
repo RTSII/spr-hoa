@@ -48,47 +48,41 @@ const Calendar = () => {
         animate={{ opacity: 1, y: 0 }}
         className="glass-card p-8"
       >
-        <h1 className="text-3xl font-display font-bold text-white mb-6">
-          Community Calendar
-        </h1>
+        <h1 className="mb-6 font-display text-3xl font-bold text-white">Community Calendar</h1>
 
         {/* Calendar Grid Placeholder */}
-        <div className="bg-white/10 rounded-lg p-6 mb-8">
-          <p className="text-white/70 text-center">
-            Interactive calendar will be displayed here
-          </p>
+        <div className="mb-8 rounded-lg bg-white/10 p-6">
+          <p className="text-center text-white/70">Interactive calendar will be displayed here</p>
         </div>
 
         {/* Upcoming Events */}
-        <h2 className="text-2xl font-display font-bold text-white mb-4">
-          Upcoming Events
-        </h2>
+        <h2 className="mb-4 font-display text-2xl font-bold text-white">Upcoming Events</h2>
         <div className="space-y-4">
           {events.map((event) => (
             <motion.div
               key={event.id}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              className="glass-card p-6 hover:bg-white/20 transition-all duration-300"
+              className="glass-card p-6 transition-all duration-300 hover:bg-white/20"
             >
               <div className="flex items-start justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium text-white ${eventTypeColors[event.type as keyof typeof eventTypeColors]}`}>
+                  <div className="mb-2 flex items-center gap-3">
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-medium text-white ${eventTypeColors[event.type as keyof typeof eventTypeColors]}`}
+                    >
                       {event.type}
                     </span>
                     <h3 className="text-xl font-semibold text-white">{event.title}</h3>
                   </div>
-                  <p className="text-white/80 mb-2">{event.description}</p>
+                  <p className="mb-2 text-white/80">{event.description}</p>
                   <div className="flex items-center gap-4 text-sm text-white/60">
                     <span>📅 {event.date}</span>
                     <span>🕐 {event.time}</span>
                     <span>📍 {event.location}</span>
                   </div>
                 </div>
-                <button className="glass-button text-sm">
-                  View Details
-                </button>
+                <button className="glass-button text-sm">View Details</button>
               </div>
             </motion.div>
           ))}

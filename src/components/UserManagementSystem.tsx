@@ -18,7 +18,7 @@ import {
   Download,
   Shield,
   Eye,
-  EyeOff
+  EyeOff,
 } from 'lucide-react'
 import { adminService } from '@/lib/adminService'
 
@@ -67,7 +67,7 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
     directory_opt_in: true,
     show_email: true,
     show_phone: false,
-    show_unit: true
+    show_unit: true,
   })
 
   useEffect(() => {
@@ -119,9 +119,10 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
   const handleBulkAction = async (action: 'directory_opt_in' | 'directory_opt_out' | 'delete') => {
     if (selectedUsers.length === 0) return
 
-    const confirmMessage = action === 'delete'
-      ? `Are you sure you want to delete ${selectedUsers.length} users? This cannot be undone.`
-      : `Apply ${action.replace('_', ' ')} to ${selectedUsers.length} selected users?`
+    const confirmMessage =
+      action === 'delete'
+        ? `Are you sure you want to delete ${selectedUsers.length} users? This cannot be undone.`
+        : `Apply ${action.replace('_', ' ')} to ${selectedUsers.length} selected users?`
 
     if (!confirm(confirmMessage)) return
 
@@ -146,7 +147,7 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
   }
 
   const filteredAndSortedUsers = users
-    .filter(user => {
+    .filter((user) => {
       const matchesSearch =
         user.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         user.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -170,7 +171,9 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
       let comparison = 0
       switch (sortBy) {
         case 'name':
-          comparison = `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`)
+          comparison = `${a.first_name} ${a.last_name}`.localeCompare(
+            `${b.first_name} ${b.last_name}`,
+          )
           break
         case 'unit':
           comparison = a.unit_number.localeCompare(b.unit_number)
@@ -186,24 +189,24 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     })
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="bg-slate-900/95 backdrop-blur-xl rounded-2xl border border-white/20 w-full max-w-7xl h-[90vh] flex flex-col overflow-hidden"
+        className="flex h-[90vh] w-full max-w-7xl flex-col overflow-hidden rounded-2xl border border-white/20 bg-slate-900/95 backdrop-blur-xl"
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
+        <div className="flex items-center justify-between border-b border-white/10 p-6">
           <div className="flex items-center space-x-3">
             <Users className="h-6 w-6 text-blue-400" />
             <h2 className="text-2xl font-bold text-white">User Management</h2>
-            <span className="px-3 py-1 text-xs bg-blue-500/20 text-blue-300 rounded-full">
+            <span className="rounded-full bg-blue-500/20 px-3 py-1 text-xs text-blue-300">
               {filteredAndSortedUsers.length} users
             </span>
           </div>
@@ -212,37 +215,34 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setShowAddUser(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-500/20 text-blue-400 rounded-lg border border-blue-500/30 hover:bg-blue-500/30 transition-all"
+              className="flex items-center space-x-2 rounded-lg border border-blue-500/30 bg-blue-500/20 px-4 py-2 text-blue-400 transition-all hover:bg-blue-500/30"
             >
               <UserPlus className="h-4 w-4" />
               <span>Add User</span>
             </motion.button>
-            <button
-              onClick={onClose}
-              className="text-white/70 hover:text-white transition-colors"
-            >
+            <button onClick={onClose} className="text-white/70 transition-colors hover:text-white">
               ✕
             </button>
           </div>
         </div>
 
         {/* Controls */}
-        <div className="p-6 border-b border-white/10 space-y-4">
+        <div className="space-y-4 border-b border-white/10 p-6">
           {/* Search and Filter */}
           <div className="flex items-center space-x-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-white/50" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-white/50" />
               <input
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 bg-black/30 border border-white/20 rounded-lg text-white placeholder-white/50 focus:border-blue-400 focus:outline-none"
+                className="w-full rounded-lg border border-white/20 bg-black/30 py-3 pl-10 pr-4 text-white placeholder-white/50 focus:border-blue-400 focus:outline-none"
                 placeholder="Search users by name, email, or unit..."
               />
             </div>
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value as any)}
-              className="px-4 py-3 bg-black/30 border border-white/20 rounded-lg text-white focus:border-blue-400 focus:outline-none"
+              className="rounded-lg border border-white/20 bg-black/30 px-4 py-3 text-white focus:border-blue-400 focus:outline-none"
             >
               <option value="all">All Users</option>
               <option value="active">Active Users</option>
@@ -256,7 +256,7 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
                 setSortBy(sort as any)
                 setSortOrder(order as any)
               }}
-              className="px-4 py-3 bg-black/30 border border-white/20 rounded-lg text-white focus:border-blue-400 focus:outline-none"
+              className="rounded-lg border border-white/20 bg-black/30 px-4 py-3 text-white focus:border-blue-400 focus:outline-none"
             >
               <option value="name-asc">Name (A-Z)</option>
               <option value="name-desc">Name (Z-A)</option>
@@ -272,18 +272,16 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="flex items-center space-x-4 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg"
+              className="flex items-center space-x-4 rounded-lg border border-blue-500/20 bg-blue-500/10 p-4"
             >
-              <span className="text-blue-300 font-medium">
-                {selectedUsers.length} selected
-              </span>
+              <span className="font-medium text-blue-300">{selectedUsers.length} selected</span>
               <div className="flex items-center space-x-2">
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => handleBulkAction('directory_opt_in')}
                   disabled={loading}
-                  className="px-4 py-2 bg-green-500/20 text-green-400 rounded border border-green-500/30 hover:bg-green-500/30 transition-all disabled:opacity-50"
+                  className="rounded border border-green-500/30 bg-green-500/20 px-4 py-2 text-green-400 transition-all hover:bg-green-500/30 disabled:opacity-50"
                 >
                   Add to Directory
                 </motion.button>
@@ -292,7 +290,7 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
                   whileTap={{ scale: 0.95 }}
                   onClick={() => handleBulkAction('directory_opt_out')}
                   disabled={loading}
-                  className="px-4 py-2 bg-yellow-500/20 text-yellow-400 rounded border border-yellow-500/30 hover:bg-yellow-500/30 transition-all disabled:opacity-50"
+                  className="rounded border border-yellow-500/30 bg-yellow-500/20 px-4 py-2 text-yellow-400 transition-all hover:bg-yellow-500/30 disabled:opacity-50"
                 >
                   Remove from Directory
                 </motion.button>
@@ -301,13 +299,13 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
                   whileTap={{ scale: 0.95 }}
                   onClick={() => handleBulkAction('delete')}
                   disabled={loading}
-                  className="px-4 py-2 bg-red-500/20 text-red-400 rounded border border-red-500/30 hover:bg-red-500/30 transition-all disabled:opacity-50"
+                  className="rounded border border-red-500/30 bg-red-500/20 px-4 py-2 text-red-400 transition-all hover:bg-red-500/30 disabled:opacity-50"
                 >
                   Delete
                 </motion.button>
                 <button
                   onClick={() => setSelectedUsers([])}
-                  className="px-4 py-2 bg-gray-500/20 text-gray-400 rounded border border-gray-500/30 hover:bg-gray-500/30 transition-all"
+                  className="rounded border border-gray-500/30 bg-gray-500/20 px-4 py-2 text-gray-400 transition-all hover:bg-gray-500/30"
                 >
                   Clear
                 </button>
@@ -319,19 +317,19 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
         {/* User List */}
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400"></div>
+            <div className="flex h-full items-center justify-center">
+              <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-blue-400"></div>
             </div>
           ) : filteredAndSortedUsers.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-white/60">
-              <Users className="h-16 w-16 mb-4 opacity-50" />
-              <h3 className="text-xl font-semibold mb-2">No Users Found</h3>
+            <div className="flex h-full flex-col items-center justify-center text-white/60">
+              <Users className="mb-4 h-16 w-16 opacity-50" />
+              <h3 className="mb-2 text-xl font-semibold">No Users Found</h3>
               <p>No users match your current search and filter criteria.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-black/20 border-b border-white/10">
+                <thead className="border-b border-white/10 bg-black/20">
                   <tr>
                     <th className="px-6 py-3 text-left">
                       <input
@@ -339,30 +337,30 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
                         checked={selectedUsers.length === filteredAndSortedUsers.length}
                         onChange={(e) => {
                           if (e.target.checked) {
-                            setSelectedUsers(filteredAndSortedUsers.map(u => u.user_id))
+                            setSelectedUsers(filteredAndSortedUsers.map((u) => u.user_id))
                           } else {
                             setSelectedUsers([])
                           }
                         }}
-                        className="w-4 h-4 text-blue-400 bg-black/30 border-white/30 rounded focus:ring-blue-400"
+                        className="h-4 w-4 rounded border-white/30 bg-black/30 text-blue-400 focus:ring-blue-400"
                       />
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white/80 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white/80">
                       User
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white/80 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white/80">
                       Unit
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white/80 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white/80">
                       Contact
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white/80 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white/80">
                       Directory
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white/80 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white/80">
                       Joined
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-white/80 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-white/80">
                       Actions
                     </th>
                   </tr>
@@ -373,7 +371,7 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
                       key={user.id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="hover:bg-white/5 transition-colors"
+                      className="transition-colors hover:bg-white/5"
                     >
                       <td className="px-6 py-4">
                         <input
@@ -383,32 +381,31 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
                             if (e.target.checked) {
                               setSelectedUsers([...selectedUsers, user.user_id])
                             } else {
-                              setSelectedUsers(selectedUsers.filter(id => id !== user.user_id))
+                              setSelectedUsers(selectedUsers.filter((id) => id !== user.user_id))
                             }
                           }}
-                          className="w-4 h-4 text-blue-400 bg-black/30 border-white/30 rounded focus:ring-blue-400"
+                          className="h-4 w-4 rounded border-white/30 bg-black/30 text-blue-400 focus:ring-blue-400"
                         />
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center">
-                          <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold">
-                            {user.first_name.charAt(0)}{user.last_name.charAt(0)}
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-600 font-semibold text-white">
+                            {user.first_name.charAt(0)}
+                            {user.last_name.charAt(0)}
                           </div>
                           <div className="ml-3">
-                            <div className="text-white font-medium">
+                            <div className="font-medium text-white">
                               {user.first_name} {user.last_name}
                             </div>
-                            <div className="text-white/60 text-sm">{user.email}</div>
+                            <div className="text-sm text-white/60">{user.email}</div>
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-white font-mono">
-                        {user.unit_number}
-                      </td>
+                      <td className="px-6 py-4 font-mono text-white">{user.unit_number}</td>
                       <td className="px-6 py-4">
                         <div className="space-y-1">
-                          <div className="flex items-center text-white/80 text-sm">
-                            <Mail className="h-3 w-3 mr-1" />
+                          <div className="flex items-center text-sm text-white/80">
+                            <Mail className="mr-1 h-3 w-3" />
                             {user.show_email ? (
                               <Eye className="h-3 w-3 text-green-400" />
                             ) : (
@@ -416,8 +413,8 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
                             )}
                           </div>
                           {user.phone && (
-                            <div className="flex items-center text-white/80 text-sm">
-                              <Phone className="h-3 w-3 mr-1" />
+                            <div className="flex items-center text-sm text-white/80">
+                              <Phone className="mr-1 h-3 w-3" />
                               {user.show_phone ? (
                                 <Eye className="h-3 w-3 text-green-400" />
                               ) : (
@@ -428,25 +425,27 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
                         </div>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          user.directory_opt_in
-                            ? 'bg-green-500/20 text-green-400'
-                            : 'bg-red-500/20 text-red-400'
-                        }`}>
+                        <span
+                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                            user.directory_opt_in
+                              ? 'bg-green-500/20 text-green-400'
+                              : 'bg-red-500/20 text-red-400'
+                          }`}
+                        >
                           {user.directory_opt_in ? (
                             <>
-                              <CheckCircle className="h-3 w-3 mr-1" />
+                              <CheckCircle className="mr-1 h-3 w-3" />
                               Listed
                             </>
                           ) : (
                             <>
-                              <XCircle className="h-3 w-3 mr-1" />
+                              <XCircle className="mr-1 h-3 w-3" />
                               Private
                             </>
                           )}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-white/70 text-sm">
+                      <td className="px-6 py-4 text-sm text-white/70">
                         {formatDate(user.created_at)}
                       </td>
                       <td className="px-6 py-4">
@@ -455,7 +454,7 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={() => setEditingUser(user)}
-                            className="p-2 text-blue-400 hover:bg-blue-500/20 rounded transition-all"
+                            className="rounded p-2 text-blue-400 transition-all hover:bg-blue-500/20"
                           >
                             <Edit3 className="h-4 w-4" />
                           </motion.button>
@@ -463,7 +462,7 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={() => handleDeleteUser(user.user_id)}
-                            className="p-2 text-red-400 hover:bg-red-500/20 rounded transition-all"
+                            className="rounded p-2 text-red-400 transition-all hover:bg-red-500/20"
                           >
                             <Trash2 className="h-4 w-4" />
                           </motion.button>
@@ -484,16 +483,16 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/80 flex items-center justify-center p-4 z-10"
+              className="absolute inset-0 z-10 flex items-center justify-center bg-black/80 p-4"
             >
               <motion.div
                 initial={{ scale: 0.9 }}
                 animate={{ scale: 1 }}
                 exit={{ scale: 0.9 }}
-                className="bg-slate-800 rounded-xl max-w-2xl w-full max-h-[90%] overflow-y-auto"
+                className="max-h-[90%] w-full max-w-2xl overflow-y-auto rounded-xl bg-slate-800"
               >
                 <div className="p-6">
-                  <div className="flex items-center justify-between mb-6">
+                  <div className="mb-6 flex items-center justify-between">
                     <h3 className="text-xl font-bold text-white">Edit User</h3>
                     <button
                       onClick={() => setEditingUser(null)}
@@ -506,61 +505,71 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-white font-medium mb-2">First Name</label>
+                        <label className="mb-2 block font-medium text-white">First Name</label>
                         <input
                           value={editingUser.first_name}
-                          onChange={(e) => setEditingUser({...editingUser, first_name: e.target.value})}
-                          className="w-full p-3 bg-black/30 border border-white/20 rounded-lg text-white focus:border-blue-400 focus:outline-none"
+                          onChange={(e) =>
+                            setEditingUser({ ...editingUser, first_name: e.target.value })
+                          }
+                          className="w-full rounded-lg border border-white/20 bg-black/30 p-3 text-white focus:border-blue-400 focus:outline-none"
                         />
                       </div>
                       <div>
-                        <label className="block text-white font-medium mb-2">Last Name</label>
+                        <label className="mb-2 block font-medium text-white">Last Name</label>
                         <input
                           value={editingUser.last_name}
-                          onChange={(e) => setEditingUser({...editingUser, last_name: e.target.value})}
-                          className="w-full p-3 bg-black/30 border border-white/20 rounded-lg text-white focus:border-blue-400 focus:outline-none"
+                          onChange={(e) =>
+                            setEditingUser({ ...editingUser, last_name: e.target.value })
+                          }
+                          className="w-full rounded-lg border border-white/20 bg-black/30 p-3 text-white focus:border-blue-400 focus:outline-none"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-white font-medium mb-2">Email</label>
+                      <label className="mb-2 block font-medium text-white">Email</label>
                       <input
                         type="email"
                         value={editingUser.email}
-                        onChange={(e) => setEditingUser({...editingUser, email: e.target.value})}
-                        className="w-full p-3 bg-black/30 border border-white/20 rounded-lg text-white focus:border-blue-400 focus:outline-none"
+                        onChange={(e) => setEditingUser({ ...editingUser, email: e.target.value })}
+                        className="w-full rounded-lg border border-white/20 bg-black/30 p-3 text-white focus:border-blue-400 focus:outline-none"
                       />
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-white font-medium mb-2">Unit Number</label>
+                        <label className="mb-2 block font-medium text-white">Unit Number</label>
                         <input
                           value={editingUser.unit_number}
-                          onChange={(e) => setEditingUser({...editingUser, unit_number: e.target.value})}
-                          className="w-full p-3 bg-black/30 border border-white/20 rounded-lg text-white focus:border-blue-400 focus:outline-none"
+                          onChange={(e) =>
+                            setEditingUser({ ...editingUser, unit_number: e.target.value })
+                          }
+                          className="w-full rounded-lg border border-white/20 bg-black/30 p-3 text-white focus:border-blue-400 focus:outline-none"
                         />
                       </div>
                       <div>
-                        <label className="block text-white font-medium mb-2">Phone</label>
+                        <label className="mb-2 block font-medium text-white">Phone</label>
                         <input
                           value={editingUser.phone || ''}
-                          onChange={(e) => setEditingUser({...editingUser, phone: e.target.value})}
-                          className="w-full p-3 bg-black/30 border border-white/20 rounded-lg text-white focus:border-blue-400 focus:outline-none"
+                          onChange={(e) =>
+                            setEditingUser({ ...editingUser, phone: e.target.value })
+                          }
+                          className="w-full rounded-lg border border-white/20 bg-black/30 p-3 text-white focus:border-blue-400 focus:outline-none"
                         />
                       </div>
                     </div>
 
                     <div className="space-y-3">
-                      <h4 className="text-white font-medium">Directory Settings</h4>
+                      <h4 className="font-medium text-white">Directory Settings</h4>
                       <div className="space-y-2">
                         <label className="flex items-center space-x-3">
                           <input
                             type="checkbox"
                             checked={editingUser.directory_opt_in}
-                            onChange={(e) => setEditingUser({...editingUser, directory_opt_in: e.target.checked})}
-                            className="w-4 h-4 text-blue-400 bg-black/30 border-white/30 rounded focus:ring-blue-400"
+                            onChange={(e) =>
+                              setEditingUser({ ...editingUser, directory_opt_in: e.target.checked })
+                            }
+                            className="h-4 w-4 rounded border-white/30 bg-black/30 text-blue-400 focus:ring-blue-400"
                           />
                           <span className="text-white">Include in resident directory</span>
                         </label>
@@ -568,8 +577,10 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
                           <input
                             type="checkbox"
                             checked={editingUser.show_email}
-                            onChange={(e) => setEditingUser({...editingUser, show_email: e.target.checked})}
-                            className="w-4 h-4 text-blue-400 bg-black/30 border-white/30 rounded focus:ring-blue-400"
+                            onChange={(e) =>
+                              setEditingUser({ ...editingUser, show_email: e.target.checked })
+                            }
+                            className="h-4 w-4 rounded border-white/30 bg-black/30 text-blue-400 focus:ring-blue-400"
                           />
                           <span className="text-white">Show email in directory</span>
                         </label>
@@ -577,8 +588,10 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
                           <input
                             type="checkbox"
                             checked={editingUser.show_phone}
-                            onChange={(e) => setEditingUser({...editingUser, show_phone: e.target.checked})}
-                            className="w-4 h-4 text-blue-400 bg-black/30 border-white/30 rounded focus:ring-blue-400"
+                            onChange={(e) =>
+                              setEditingUser({ ...editingUser, show_phone: e.target.checked })
+                            }
+                            className="h-4 w-4 rounded border-white/30 bg-black/30 text-blue-400 focus:ring-blue-400"
                           />
                           <span className="text-white">Show phone in directory</span>
                         </label>
@@ -586,8 +599,10 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
                           <input
                             type="checkbox"
                             checked={editingUser.show_unit}
-                            onChange={(e) => setEditingUser({...editingUser, show_unit: e.target.checked})}
-                            className="w-4 h-4 text-blue-400 bg-black/30 border-white/30 rounded focus:ring-blue-400"
+                            onChange={(e) =>
+                              setEditingUser({ ...editingUser, show_unit: e.target.checked })
+                            }
+                            className="h-4 w-4 rounded border-white/30 bg-black/30 text-blue-400 focus:ring-blue-400"
                           />
                           <span className="text-white">Show unit number in directory</span>
                         </label>
@@ -600,7 +615,7 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
                         whileTap={{ scale: 0.95 }}
                         onClick={() => handleUpdateUser(editingUser.user_id, editingUser)}
                         disabled={loading}
-                        className="flex-1 py-3 bg-blue-500/20 text-blue-400 rounded-lg border border-blue-500/30 hover:bg-blue-500/30 transition-all disabled:opacity-50 font-medium"
+                        className="flex-1 rounded-lg border border-blue-500/30 bg-blue-500/20 py-3 font-medium text-blue-400 transition-all hover:bg-blue-500/30 disabled:opacity-50"
                       >
                         Save Changes
                       </motion.button>
@@ -608,7 +623,7 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => setEditingUser(null)}
-                        className="px-6 py-3 bg-gray-500/20 text-gray-400 rounded-lg border border-gray-500/30 hover:bg-gray-500/30 transition-all"
+                        className="rounded-lg border border-gray-500/30 bg-gray-500/20 px-6 py-3 text-gray-400 transition-all hover:bg-gray-500/30"
                       >
                         Cancel
                       </motion.button>

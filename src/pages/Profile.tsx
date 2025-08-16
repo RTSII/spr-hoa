@@ -31,7 +31,7 @@ const Profile = () => {
     register,
     handleSubmit,
     watch,
-    formState: { errors, isDirty }
+    formState: { errors, isDirty },
   } = useForm<ProfileFormData>({
     defaultValues: {
       firstName: profile?.first_name || '',
@@ -41,8 +41,8 @@ const Profile = () => {
       directoryOptIn: profile?.directory_opt_in || false,
       showEmail: profile?.show_email || false,
       showPhone: profile?.show_phone || false,
-      showUnit: profile?.show_unit || true
-    }
+      showUnit: profile?.show_unit || true,
+    },
   })
 
   const directoryOptIn = watch('directoryOptIn')
@@ -51,7 +51,7 @@ const Profile = () => {
     setIsLoading(true)
     setError('')
     setSuccessMessage('')
-    
+
     try {
       await updateProfile({
         first_name: data.firstName,
@@ -61,9 +61,9 @@ const Profile = () => {
         directory_opt_in: data.directoryOptIn,
         show_email: data.showEmail,
         show_phone: data.showPhone,
-        show_unit: data.showUnit
+        show_unit: data.showUnit,
       })
-      
+
       // Store profile data in Supermemory.ai
       try {
         await storeProfileData({
@@ -75,12 +75,12 @@ const Profile = () => {
           directoryOptIn: data.directoryOptIn,
           showEmail: data.showEmail,
           showPhone: data.showPhone,
-          showUnit: data.showUnit
-        });
+          showUnit: data.showUnit,
+        })
       } catch (smErr) {
-        console.warn('Supermemory store failed:', smErr);
+        console.warn('Supermemory store failed:', smErr)
       }
-      
+
       setSuccessMessage('Profile updated successfully!')
       setTimeout(() => setSuccessMessage(''), 3000)
     } catch (err: any) {
@@ -98,7 +98,7 @@ const Profile = () => {
           directory_opt_in: false,
           show_email: false,
           show_phone: false,
-          show_unit: false
+          show_unit: false,
         })
         setSuccessMessage('You have been removed from the directory.')
         setTimeout(() => setSuccessMessage(''), 3000)
@@ -126,12 +126,9 @@ const Profile = () => {
         animate={{ opacity: 1, y: 0 }}
         className="glass-card p-8"
       >
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-display font-bold text-white">Profile Settings</h1>
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="text-white/70 hover:text-white"
-          >
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="font-display text-3xl font-bold text-white">Profile Settings</h1>
+          <button onClick={() => navigate('/dashboard')} className="text-white/70 hover:text-white">
             ← Back to Dashboard
           </button>
         </div>
@@ -141,15 +138,13 @@ const Profile = () => {
           <div className="space-y-4">
             <h2 className="text-xl font-semibold text-white">Personal Information</h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-white mb-2">
-                  First Name
-                </label>
+                <label className="mb-2 block text-sm font-medium text-white">First Name</label>
                 <input
                   {...register('firstName', { required: 'First name is required' })}
                   type="text"
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400/50 focus:border-teal-400/50 transition-all duration-300 backdrop-blur-sm"
+                  className="w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-white/50 backdrop-blur-sm transition-all duration-300 focus:border-teal-400/50 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
                 />
                 {errors.firstName && (
                   <p className="mt-1 text-sm text-red-400">{errors.firstName.message}</p>
@@ -157,13 +152,11 @@ const Profile = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-white mb-2">
-                  Last Name
-                </label>
+                <label className="mb-2 block text-sm font-medium text-white">Last Name</label>
                 <input
                   {...register('lastName', { required: 'Last name is required' })}
                   type="text"
-                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400/50 focus:border-teal-400/50 transition-all duration-300 backdrop-blur-sm"
+                  className="w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-white placeholder-white/50 backdrop-blur-sm transition-all duration-300 focus:border-teal-400/50 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
                 />
                 {errors.lastName && (
                   <p className="mt-1 text-sm text-red-400">{errors.lastName.message}</p>
@@ -172,23 +165,24 @@ const Profile = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white mb-2">
-                Email
-              </label>
+              <label className="mb-2 block text-sm font-medium text-white">Email</label>
               <div className="relative">
                 <input
                   {...register('email', {
                     required: 'Email is required',
                     pattern: {
                       value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: 'Invalid email address'
-                    }
+                      message: 'Invalid email address',
+                    },
                   })}
                   type="email"
-                  className={`w-full px-4 py-3 pr-10 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400/50 focus:border-teal-400/50 transition-all duration-300 backdrop-blur-sm ${!errors.email && watch('email') ? 'border-green-400' : ''}`}
+                  className={`w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 pr-10 text-white placeholder-white/50 backdrop-blur-sm transition-all duration-300 focus:border-teal-400/50 focus:outline-none focus:ring-2 focus:ring-teal-400/50 ${!errors.email && watch('email') ? 'border-green-400' : ''}`}
                 />
                 {!errors.email && watch('email') && (
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-400" title="Valid email">
+                  <span
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-green-400"
+                    title="Valid email"
+                  >
                     ✓
                   </span>
                 )}
@@ -199,23 +193,24 @@ const Profile = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-white mb-2">
-                Phone
-              </label>
+              <label className="mb-2 block text-sm font-medium text-white">Phone</label>
               <div className="relative">
                 <input
                   {...register('phone', {
                     pattern: {
                       value: /^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$/,
-                      message: 'Phone number must be 10 digits (e.g., (555) 555-5555)'
-                    }
+                      message: 'Phone number must be 10 digits (e.g., (555) 555-5555)',
+                    },
                   })}
                   type="tel"
-                  className={`w-full px-4 py-3 pr-10 bg-white/10 border border-white/20 rounded-xl text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400/50 focus:border-teal-400/50 transition-all duration-300 backdrop-blur-sm ${!errors.phone && watch('phone') ? 'border-green-400' : ''}`}
+                  className={`w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 pr-10 text-white placeholder-white/50 backdrop-blur-sm transition-all duration-300 focus:border-teal-400/50 focus:outline-none focus:ring-2 focus:ring-teal-400/50 ${!errors.phone && watch('phone') ? 'border-green-400' : ''}`}
                   placeholder="(XXX) XXX-XXXX"
                 />
                 {!errors.phone && watch('phone') && (
-                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-green-400" title="Valid phone">
+                  <span
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-green-400"
+                    title="Valid phone"
+                  >
                     ✓
                   </span>
                 )}
@@ -225,26 +220,32 @@ const Profile = () => {
               </div>
             </div>
 
-            <div className="bg-white/10 rounded-lg p-4">
+            <div className="rounded-lg bg-white/10 p-4">
               <p className="text-white/80">
                 <span className="font-semibold">Unit:</span> {profile?.unit_number}
               </p>
-              <p className="text-white/60 text-sm mt-1">
+              <p className="mt-1 text-sm text-white/60">
                 Unit number cannot be changed. Contact the HOA if this is incorrect.
               </p>
             </div>
           </div>
 
           {/* Directory Settings */}
-          <div className="space-y-4 p-6 bg-white/10 rounded-lg">
-            <h2 className="text-xl font-semibold text-white mb-2">Choose How You Appear in the Community Directory</h2>
-            <p className="text-white/80 mb-4">You control what information is visible to other residents. Toggle each option below to decide what appears in the Directory. <span className="font-semibold">All options are off by default.</span></p>
+          <div className="space-y-4 rounded-lg bg-white/10 p-6">
+            <h2 className="mb-2 text-xl font-semibold text-white">
+              Choose How You Appear in the Community Directory
+            </h2>
+            <p className="mb-4 text-white/80">
+              You control what information is visible to other residents. Toggle each option below
+              to decide what appears in the Directory.{' '}
+              <span className="font-semibold">All options are off by default.</span>
+            </p>
 
             <div className="flex items-center">
               <input
                 {...register('directoryOptIn')}
                 type="checkbox"
-                className="h-4 w-4 text-seafoam focus:ring-seafoam border-white/30 rounded bg-white/10"
+                className="h-4 w-4 rounded border-white/30 bg-white/10 text-seafoam focus:ring-seafoam"
               />
               <label className="ml-2 block text-sm text-white">
                 Include me in the resident directory
@@ -264,9 +265,9 @@ const Profile = () => {
                   <input
                     {...register('showUnit')}
                     type="checkbox"
-                    className="h-4 w-4 text-seafoam focus:ring-seafoam border-white/30 rounded bg-white/10"
+                    className="h-4 w-4 rounded border-white/30 bg-white/10 text-seafoam focus:ring-seafoam"
                   />
-                  <label className="ml-2 block text-sm text-white/80 flex items-center">
+                  <label className="ml-2 block flex items-center text-sm text-white/80">
                     Show my unit number
                   </label>
                 </div>
@@ -275,9 +276,9 @@ const Profile = () => {
                   <input
                     {...register('showEmail')}
                     type="checkbox"
-                    className="h-4 w-4 text-seafoam focus:ring-seafoam border-white/30 rounded bg-white/10"
+                    className="h-4 w-4 rounded border-white/30 bg-white/10 text-seafoam focus:ring-seafoam"
                   />
-                  <label className="ml-2 block text-sm text-white/80 flex items-center">
+                  <label className="ml-2 block flex items-center text-sm text-white/80">
                     Show my email address
                   </label>
                 </div>
@@ -286,9 +287,9 @@ const Profile = () => {
                   <input
                     {...register('showPhone')}
                     type="checkbox"
-                    className="h-4 w-4 text-seafoam focus:ring-seafoam border-white/30 rounded bg-white/10"
+                    className="h-4 w-4 rounded border-white/30 bg-white/10 text-seafoam focus:ring-seafoam"
                   />
-                  <label className="ml-2 block text-sm text-white/80 flex items-center">
+                  <label className="ml-2 block flex items-center text-sm text-white/80">
                     Show my phone number
                   </label>
                 </div>
@@ -296,11 +297,11 @@ const Profile = () => {
             )}
 
             {profile?.directory_opt_in && (
-              <div className="pt-4 border-t border-white/20">
+              <div className="border-t border-white/20 pt-4">
                 <button
                   type="button"
                   onClick={handleRemoveFromDirectory}
-                  className="text-red-400 hover:text-red-300 text-sm font-medium"
+                  className="text-sm font-medium text-red-400 hover:text-red-300"
                 >
                   Remove me from the directory completely
                 </button>
@@ -313,14 +314,14 @@ const Profile = () => {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-green-500/10 border border-green-500/50 rounded-lg p-4"
+              className="rounded-lg border border-green-500/50 bg-green-500/10 p-4"
             >
               <p className="text-sm text-green-400">{successMessage}</p>
             </motion.div>
           )}
 
           {error && (
-            <div className="bg-red-500/10 border border-red-500/50 rounded-lg p-4">
+            <div className="rounded-lg border border-red-500/50 bg-red-500/10 p-4">
               <p className="text-sm text-red-400">{error}</p>
             </div>
           )}
@@ -330,7 +331,7 @@ const Profile = () => {
             <button
               type="submit"
               disabled={isLoading || !isDirty}
-              className={`px-6 py-3 bg-gradient-to-r from-teal-500 to-blue-600 text-white font-semibold rounded-xl hover:from-teal-400 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50 transition-all duration-300 ${(!isDirty || isLoading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+              className={`rounded-xl bg-gradient-to-r from-teal-500 to-blue-600 px-6 py-3 font-semibold text-white transition-all duration-300 hover:from-teal-400 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50 ${!isDirty || isLoading ? 'cursor-not-allowed opacity-50' : ''}`}
             >
               {isLoading ? 'Saving...' : 'Save Changes'}
             </button>
@@ -345,7 +346,7 @@ const Profile = () => {
           animate={{ opacity: 1, y: 0 }}
           className="glass-card p-8"
         >
-          <h2 className="text-2xl font-bold text-white mb-6">My Messages</h2>
+          <h2 className="mb-6 text-2xl font-bold text-white">My Messages</h2>
           <OwnerInbox user_id={profile.user_id} />
         </motion.div>
       )}
@@ -354,45 +355,47 @@ const Profile = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-card p-8 mt-6"
+        className="glass-card mt-6 p-8"
       >
-        <h2 className="text-2xl font-bold text-white mb-6">Search Profiles with AI</h2>
-        <p className="text-white/80 mb-4">As admin, search through all profile updates and changes using natural language queries.</p>
-        <div className="flex gap-2 mb-4">
+        <h2 className="mb-6 text-2xl font-bold text-white">Search Profiles with AI</h2>
+        <p className="mb-4 text-white/80">
+          As admin, search through all profile updates and changes using natural language queries.
+        </p>
+        <div className="mb-4 flex gap-2">
           <input
             type="text"
             value={supermemoryQuery}
             onChange={(e) => setSupermemoryQuery(e.target.value)}
             placeholder="Search profiles (e.g., 'users who changed phone numbers', 'profiles updated last week')"
-            className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
+            className="flex-1 rounded-lg border border-white/20 bg-white/10 px-4 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
           />
           <button
             type="button"
             onClick={async () => {
-              if (!supermemoryQuery.trim()) return;
+              if (!supermemoryQuery.trim()) return
               try {
-                const results = await searchProfiles(supermemoryQuery);
-                setSupermemoryResults(results?.results || []);
+                const results = await searchProfiles(supermemoryQuery)
+                setSupermemoryResults(results?.results || [])
               } catch (err) {
-                console.error('Supermemory search failed:', err);
-                setSupermemoryResults([]);
+                console.error('Supermemory search failed:', err)
+                setSupermemoryResults([])
               }
             }}
-            className="px-4 py-2 bg-gradient-to-r from-teal-500 to-blue-600 text-white rounded-lg hover:from-teal-400 hover:to-blue-500 transition-all focus:outline-none focus:ring-2 focus:ring-teal-400/50"
+            className="rounded-lg bg-gradient-to-r from-teal-500 to-blue-600 px-4 py-2 text-white transition-all hover:from-teal-400 hover:to-blue-500 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
           >
             Search
           </button>
         </div>
-        
+
         {supermemoryResults.length > 0 && (
           <div>
-            <h3 className="font-medium text-white mb-2">Search Results:</h3>
-            <div className="space-y-2 max-h-60 overflow-y-auto">
+            <h3 className="mb-2 font-medium text-white">Search Results:</h3>
+            <div className="max-h-60 space-y-2 overflow-y-auto">
               {supermemoryResults.map((result, index) => (
-                <div key={index} className="p-3 bg-white/10 border border-white/20 rounded-lg">
+                <div key={index} className="rounded-lg border border-white/20 bg-white/10 p-3">
                   <div className="font-medium text-white">{result.content.split('\n')[0]}</div>
                   <div className="text-sm text-white/80">{result.content.split('\n')[1]}</div>
-                  <div className="text-xs text-white/60 mt-1">Score: {result.score}</div>
+                  <div className="mt-1 text-xs text-white/60">Score: {result.score}</div>
                 </div>
               ))}
             </div>

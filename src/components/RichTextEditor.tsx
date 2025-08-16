@@ -1,17 +1,17 @@
-import React from 'react';
-import dynamic from 'next/dynamic';
+import React from 'react'
+import dynamic from 'next/dynamic'
 // Use a dynamic import for a modern rich text editor, e.g., React Quill or similar
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
-import 'react-quill/dist/quill.snow.css';
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false })
+import 'react-quill/dist/quill.snow.css'
 
 interface RichTextEditorProps {
-  value: string;
-  onChange: (value: string) => void;
+  value: string
+  onChange: (value: string) => void
 }
 
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
   return (
-    <div className="bg-white/10 rounded border border-white/20">
+    <div className="rounded border border-white/20 bg-white/10">
       <ReactQuill
         theme="snow"
         value={value}
@@ -22,13 +22,13 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
             ['bold', 'italic', 'underline', 'strike'],
             [{ list: 'ordered' }, { list: 'bullet' }],
             ['link', 'image'],
-            ['clean']
-          ]
+            ['clean'],
+          ],
         }}
         className="text-black"
       />
     </div>
-  );
-};
+  )
+}
 
-export default RichTextEditor;
+export default RichTextEditor

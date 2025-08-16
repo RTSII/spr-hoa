@@ -1,162 +1,163 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, ZoomIn, ChevronLeft, ChevronRight, Search } from 'lucide-react';
-import { searchPhotos } from '../lib/supermemory';
+import React, { useState, useEffect, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { X, ZoomIn, ChevronLeft, ChevronRight, Search } from 'lucide-react'
+import { searchPhotos } from '../lib/supermemory'
 
 interface GalleryItem {
-  id: string;
-  image: string;
-  title: string;
-  category: string;
-  description?: string;
+  id: string
+  image: string
+  title: string
+  category: string
+  description?: string
 }
 
 interface CategoryData {
-  name: string;
-  count: number;
-  thumbnail: string;
-  color: string;
+  name: string
+  count: number
+  thumbnail: string
+  color: string
 }
 
 interface CircularGalleryProps {
-  items: GalleryItem[];
-  bend?: number;
-  textColor?: string;
-  borderRadius?: number;
-  scrollSpeed?: number;
-  scrollEase?: number;
+  items: GalleryItem[]
+  bend?: number
+  textColor?: string
+  borderRadius?: number
+  scrollSpeed?: number
+  scrollEase?: number
 }
 
 const CircularGallery: React.FC<CircularGalleryProps> = ({
   items = [],
   bend = 3,
-  textColor = "#ffffff",
+  textColor = '#ffffff',
   borderRadius = 0.05,
   scrollSpeed = 2,
-  scrollEase = 0.05
+  scrollEase = 0.05,
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null);
-  const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [supermemoryQuery, setSupermemoryQuery] = useState('');
-  const [supermemoryResults, setSupermemoryResults] = useState<any[]>([]);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [scrollPosition, setScrollPosition] = useState(0);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [selectedImage, setSelectedImage] = useState<GalleryItem | null>(null)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
+  const [supermemoryQuery, setSupermemoryQuery] = useState('')
+  const [supermemoryResults, setSupermemoryResults] = useState<any[]>([])
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [scrollPosition, setScrollPosition] = useState(0)
 
   // Group items by category and create category data
   const categories: CategoryData[] = React.useMemo(() => {
-    const categoryMap = new Map<string, GalleryItem[]>();
+    const categoryMap = new Map<string, GalleryItem[]>()
 
-    items.forEach(item => {
+    items.forEach((item) => {
       if (!categoryMap.has(item.category)) {
-        categoryMap.set(item.category, []);
+        categoryMap.set(item.category, [])
       }
-      categoryMap.get(item.category)?.push(item);
-    });
+      categoryMap.get(item.category)?.push(item)
+    })
 
     return Array.from(categoryMap.entries()).map(([name, categoryItems], index) => ({
       name,
       count: categoryItems.length,
       thumbnail: categoryItems[0]?.image || '',
-      color: `hsl(${Math.random() * 360}, 70%, 60%)`
-    }));
-  }, [items]);
+      color: `hsl(${Math.random() * 360}, 70%, 60%)`,
+    }))
+  }, [items])
 
   // Get items for selected category
   const categoryItems = React.useMemo(() => {
-    if (!selectedCategory) return [];
-    return items.filter(item => item.category === selectedCategory);
-  }, [items, selectedCategory]);
+    if (!selectedCategory) return []
+    return items.filter((item) => item.category === selectedCategory)
+  }, [items, selectedCategory])
 
   // Handle wheel scroll for circular rotation
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
-      if (!containerRef.current) return;
-      e.preventDefault();
+      if (!containerRef.current) return
+      e.preventDefault()
 
-      setScrollPosition(prev => {
-        const newPos = prev + (e.deltaY * scrollSpeed * 0.01);
-        return newPos;
-      });
-    };
-
-    const container = containerRef.current;
-    if (container) {
-      container.addEventListener('wheel', handleWheel, { passive: false });
-      return () => container.removeEventListener('wheel', handleWheel);
+      setScrollPosition((prev) => {
+        const newPos = prev + e.deltaY * scrollSpeed * 0.01
+        return newPos
+      })
     }
-  }, [scrollSpeed]);
+
+    const container = containerRef.current
+    if (container) {
+      container.addEventListener('wheel', handleWheel, { passive: false })
+      return () => container.removeEventListener('wheel', handleWheel)
+    }
+  }, [scrollSpeed])
 
   // Calculate circular positions
   const getCircularPosition = (index: number, total: number) => {
-    const angle = (2 * Math.PI * index) / total + scrollPosition;
-    const radius = 200;
-    const x = Math.cos(angle) * radius;
-    const y = Math.sin(angle) * radius * (bend / 10);
-    const scale = 0.8 + 0.2 * Math.cos(angle + Math.PI / 2);
-    const zIndex = Math.round(50 + 50 * Math.cos(angle + Math.PI / 2));
+    const angle = (2 * Math.PI * index) / total + scrollPosition
+    const radius = 200
+    const x = Math.cos(angle) * radius
+    const y = Math.sin(angle) * radius * (bend / 10)
+    const scale = 0.8 + 0.2 * Math.cos(angle + Math.PI / 2)
+    const zIndex = Math.round(50 + 50 * Math.cos(angle + Math.PI / 2))
 
-    return { x, y, scale, zIndex, angle };
-  };
+    return { x, y, scale, zIndex, angle }
+  }
 
   const openLightbox = (item: GalleryItem) => {
-    const index = categoryItems.findIndex(i => i.id === item.id);
-    setSelectedImage(item);
-    setLightboxIndex(index);
-  };
+    const index = categoryItems.findIndex((i) => i.id === item.id)
+    setSelectedImage(item)
+    setLightboxIndex(index)
+  }
 
   const navigateLightbox = (direction: 'prev' | 'next') => {
-    const newIndex = direction === 'next'
-      ? (lightboxIndex + 1) % categoryItems.length
-      : (lightboxIndex - 1 + categoryItems.length) % categoryItems.length;
+    const newIndex =
+      direction === 'next'
+        ? (lightboxIndex + 1) % categoryItems.length
+        : (lightboxIndex - 1 + categoryItems.length) % categoryItems.length
 
-    setLightboxIndex(newIndex);
-    setSelectedImage(categoryItems[newIndex]);
-  };
+    setLightboxIndex(newIndex)
+    setSelectedImage(categoryItems[newIndex])
+  }
 
   const handleSupermemorySearch = async () => {
     try {
-      if (!supermemoryQuery) return;
-      const results = await searchPhotos(supermemoryQuery);
-      setSupermemoryResults(results?.results || []);
+      if (!supermemoryQuery) return
+      const results = await searchPhotos(supermemoryQuery)
+      setSupermemoryResults(results?.results || [])
     } catch (error) {
-      console.error('Supermemory search error:', error);
-      setSupermemoryResults([]);
+      console.error('Supermemory search error:', error)
+      setSupermemoryResults([])
     }
-  };
+  }
 
   return (
-    <div className="w-full max-w-6xl mx-auto">
+    <div className="mx-auto w-full max-w-6xl">
       {/* Supermemory AI Search */}
-      <div className="mb-8 p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-        <div className="flex items-center gap-2 mb-2">
-          <Search className="w-5 h-5 text-blue-400" />
+      <div className="mb-8 rounded-lg border border-gray-700 bg-gray-800/50 p-4">
+        <div className="mb-2 flex items-center gap-2">
+          <Search className="h-5 w-5 text-blue-400" />
           <h2 className="text-xl font-semibold text-white">AI-Powered Photo Search</h2>
         </div>
-        <div className="flex gap-2 mb-4">
+        <div className="mb-4 flex gap-2">
           <input
             type="text"
             placeholder="Search photos by description, category, or other metadata..."
-            className="flex-1 px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400"
+            className="flex-1 rounded-lg border border-gray-600 bg-gray-700 px-4 py-2 text-white placeholder-gray-400"
             value={supermemoryQuery}
-            onChange={e => setSupermemoryQuery(e.target.value)}
+            onChange={(e) => setSupermemoryQuery(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleSupermemorySearch()}
           />
           <button
             onClick={handleSupermemorySearch}
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+            className="rounded-lg bg-blue-600 px-4 py-2 transition-colors hover:bg-blue-700"
             disabled={!supermemoryQuery}
           >
             Search
           </button>
         </div>
-        
+
         {supermemoryResults.length > 0 && (
           <div>
-            <h3 className="text-lg font-medium text-white mb-2">AI Search Results:</h3>
+            <h3 className="mb-2 text-lg font-medium text-white">AI Search Results:</h3>
             <div className="space-y-2">
               {supermemoryResults.map((res, i) => (
-                <div key={i} className="p-3 bg-gray-700/50 rounded-lg border border-gray-600">
+                <div key={i} className="rounded-lg border border-gray-600 bg-gray-700/50 p-3">
                   <p className="text-white">{res.content}</p>
                 </div>
               ))}
@@ -173,12 +174,12 @@ const CircularGallery: React.FC<CircularGalleryProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="relative h-[500px] flex items-center justify-center"
+            className="relative flex h-[500px] items-center justify-center"
             ref={containerRef}
           >
-            <div className="relative w-full h-full">
+            <div className="relative h-full w-full">
               {categories.map((category, index) => {
-                const position = getCircularPosition(index, categories.length);
+                const position = getCircularPosition(index, categories.length)
 
                 return (
                   <motion.div
@@ -198,7 +199,7 @@ const CircularGallery: React.FC<CircularGalleryProps> = ({
                     onClick={() => setSelectedCategory(category.name)}
                   >
                     <div
-                      className="relative w-32 h-32 rounded-lg overflow-hidden shadow-2xl border-4 border-white/20"
+                      className="relative h-32 w-32 overflow-hidden rounded-lg border-4 border-white/20 shadow-2xl"
                       style={{
                         borderRadius: `${borderRadius * 100}px`,
                         transform: `rotateY(${Math.sin(position.angle) * 15}deg) rotateX(${Math.cos(position.angle) * 5}deg)`,
@@ -208,7 +209,7 @@ const CircularGallery: React.FC<CircularGalleryProps> = ({
                       <img
                         src={category.thumbnail}
                         alt={category.name}
-                        className="w-full h-full object-cover"
+                        className="h-full w-full object-cover"
                       />
 
                       {/* Gradient overlay */}
@@ -220,22 +221,19 @@ const CircularGallery: React.FC<CircularGalleryProps> = ({
                       {/* Category info */}
                       <div className="absolute bottom-0 left-0 right-0 p-3">
                         <h3
-                          className="font-bold text-sm leading-tight"
+                          className="text-sm font-bold leading-tight"
                           style={{ color: textColor }}
                         >
                           {category.name}
                         </h3>
-                        <p
-                          className="text-xs opacity-80"
-                          style={{ color: textColor }}
-                        >
+                        <p className="text-xs opacity-80" style={{ color: textColor }}>
                           {category.count} photos
                         </p>
                       </div>
 
                       {/* Shine effect */}
                       <div
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300"
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 transition-opacity duration-300 hover:opacity-100"
                         style={{
                           transform: `translateX(-100%) skewX(-15deg)`,
                           animation: 'shine 2s infinite',
@@ -243,13 +241,13 @@ const CircularGallery: React.FC<CircularGalleryProps> = ({
                       />
                     </div>
                   </motion.div>
-                );
+                )
               })}
             </div>
 
             {/* Instructions */}
-            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-center">
-              <p className="text-white/80 text-sm">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 transform text-center">
+              <p className="text-sm text-white/80">
                 Scroll to rotate • Click a category to view photos
               </p>
             </div>
@@ -268,55 +266,51 @@ const CircularGallery: React.FC<CircularGalleryProps> = ({
               <div className="flex items-center space-x-4">
                 <button
                   onClick={() => setSelectedCategory(null)}
-                  className="flex items-center space-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg text-white transition-colors"
+                  className="flex items-center space-x-2 rounded-lg bg-white/10 px-4 py-2 text-white transition-colors hover:bg-white/20"
                 >
                   <ChevronLeft className="h-4 w-4" />
                   <span>Back to Categories</span>
                 </button>
-                <h2 className="text-2xl font-bold text-white capitalize">
+                <h2 className="text-2xl font-bold capitalize text-white">
                   {selectedCategory} Gallery
                 </h2>
-                <span className="px-3 py-1 bg-blue-500/20 text-blue-300 rounded-full text-sm">
+                <span className="rounded-full bg-blue-500/20 px-3 py-1 text-sm text-blue-300">
                   {categoryItems.length} photos
                 </span>
               </div>
             </div>
 
             {/* Masonry Grid */}
-            <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
+            <div className="columns-1 gap-4 space-y-4 md:columns-2 lg:columns-3 xl:columns-4">
               {categoryItems.map((item, index) => (
                 <motion.div
                   key={item.id}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="break-inside-avoid mb-4 group cursor-pointer"
+                  className="group mb-4 cursor-pointer break-inside-avoid"
                   onClick={() => openLightbox(item)}
                 >
-                  <div className="relative overflow-hidden rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 hover:border-white/30 transition-all duration-300 group-hover:scale-[1.02]">
+                  <div className="relative overflow-hidden rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm transition-all duration-300 hover:border-white/30 group-hover:scale-[1.02]">
                     <img
                       src={item.image}
                       alt={item.title}
-                      className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="h-auto w-full object-cover transition-transform duration-300 group-hover:scale-105"
                       loading="lazy"
                     />
 
                     {/* Overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100">
                       <div className="absolute bottom-0 left-0 right-0 p-4">
-                        <h3 className="text-white font-semibold text-sm mb-1">
-                          {item.title}
-                        </h3>
+                        <h3 className="mb-1 text-sm font-semibold text-white">{item.title}</h3>
                         {item.description && (
-                          <p className="text-white/80 text-xs line-clamp-2">
-                            {item.description}
-                          </p>
+                          <p className="line-clamp-2 text-xs text-white/80">{item.description}</p>
                         )}
                       </div>
 
                       {/* Zoom icon */}
-                      <div className="absolute top-4 right-4">
-                        <div className="w-8 h-8 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                      <div className="absolute right-4 top-4">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
                           <ZoomIn className="h-4 w-4 text-white" />
                         </div>
                       </div>
@@ -336,14 +330,14 @@ const CircularGallery: React.FC<CircularGalleryProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm"
             onClick={() => setSelectedImage(null)}
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="relative max-w-4xl max-h-[80vh] w-full"
+              className="relative max-h-[80vh] w-full max-w-4xl"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Navigation buttons */}
@@ -351,13 +345,13 @@ const CircularGallery: React.FC<CircularGalleryProps> = ({
                 <>
                   <button
                     onClick={() => navigateLightbox('prev')}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors z-10"
+                    className="absolute left-4 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 transform items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
                   >
                     <ChevronLeft className="h-6 w-6" />
                   </button>
                   <button
                     onClick={() => navigateLightbox('next')}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors z-10"
+                    className="absolute right-4 top-1/2 z-10 flex h-12 w-12 -translate-y-1/2 transform items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
                   >
                     <ChevronRight className="h-6 w-6" />
                   </button>
@@ -367,7 +361,7 @@ const CircularGallery: React.FC<CircularGalleryProps> = ({
               {/* Close button */}
               <button
                 onClick={() => setSelectedImage(null)}
-                className="absolute top-4 right-4 w-10 h-10 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white transition-colors z-10"
+                className="absolute right-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white transition-colors hover:bg-black/70"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -376,20 +370,16 @@ const CircularGallery: React.FC<CircularGalleryProps> = ({
               <img
                 src={selectedImage.image}
                 alt={selectedImage.title}
-                className="w-full h-full object-contain rounded-lg"
+                className="h-full w-full rounded-lg object-contain"
               />
 
               {/* Image info */}
-              <div className="absolute bottom-4 left-4 right-4 bg-black/50 backdrop-blur-sm rounded-lg p-4">
-                <h3 className="text-white font-semibold text-lg mb-1">
-                  {selectedImage.title}
-                </h3>
+              <div className="absolute bottom-4 left-4 right-4 rounded-lg bg-black/50 p-4 backdrop-blur-sm">
+                <h3 className="mb-1 text-lg font-semibold text-white">{selectedImage.title}</h3>
                 {selectedImage.description && (
-                  <p className="text-white/80 text-sm">
-                    {selectedImage.description}
-                  </p>
+                  <p className="text-sm text-white/80">{selectedImage.description}</p>
                 )}
-                <p className="text-white/60 text-xs mt-2">
+                <p className="mt-2 text-xs text-white/60">
                   {lightboxIndex + 1} of {categoryItems.length}
                 </p>
               </div>
@@ -400,12 +390,16 @@ const CircularGallery: React.FC<CircularGalleryProps> = ({
 
       <style jsx>{`
         @keyframes shine {
-          0% { transform: translateX(-100%) skewX(-15deg); }
-          100% { transform: translateX(200%) skewX(-15deg); }
+          0% {
+            transform: translateX(-100%) skewX(-15deg);
+          }
+          100% {
+            transform: translateX(200%) skewX(-15deg);
+          }
         }
       `}</style>
     </div>
-  );
-};
+  )
+}
 
-export default CircularGallery;
+export default CircularGallery
