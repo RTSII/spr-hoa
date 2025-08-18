@@ -2,6 +2,12 @@
 
 This guide provides step-by-step instructions for setting up and testing the complete messaging system that allows admin-to-resident communication and photo rejection notifications.
 
+> 2025-08-18 Notes
+>
+> - SQL references updated: see `sql/complete_messaging_system.sql` for core schema and `sql/send_photo_rejection_email_updated.sql` for the latest photo rejection email function.
+> - Email deployment: the helper script `./deploy-email-service.sh` is available; Supabase Edge Function source lives under `supabase/functions/send-email/`.
+> - Photo rejection notifications are fully wired to the messaging system and email pathway when configured.
+
 ## 🎯 System Overview
 
 The messaging system provides:

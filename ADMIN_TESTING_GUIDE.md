@@ -10,6 +10,12 @@
    - **Password**: `basedgod`
 3. **Auto-redirect**: You'll be taken to `/admin` automatically
 
+> 2025-08-18 Notes
+>
+> - The Magic Bento Admin Dashboard is the default at `/admin`; legacy remains at `/admin/legacy`.
+> - Each feature tab includes a "Back to Dashboard" button for easy navigation.
+> - If dashboard stats show 0 or error, deploy `get_admin_dashboard_stats` from `admin_features_setup.sql` (or `spr_hoa_unified_setup.sql`) via the Supabase SQL Editor.
+
 ### Step 2: Admin Dashboard Overview
 
 You should see the **SPR-HOA Admin Portal** with:

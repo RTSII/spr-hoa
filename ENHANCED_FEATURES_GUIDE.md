@@ -6,6 +6,12 @@ This guide covers the new enhanced features implemented in the SPR-HOA portal:
 2. **Circular Gallery for Photo Categories**
 3. **Profile Picture Thumbnails in Resident Directory**
 
+> 2025-08-18 Notes
+>
+> - Supermemory.ai integration is live across profile, settings, dev portal, invite requests, admin dashboard, and all photo components (Photos, PhotoGalleryUpload, CircularGallery, PhotoApprovalSystem).
+> - Email rejection flow SQL is updated; see `sql/send_photo_rejection_email_updated.sql` and the Edge Function source in `supabase/functions/send-email/`.
+> - Security: per preference, EXIF stripping is reverted; uploads use raw files and original extensions.
+
 ## 🔥 Feature 1: Email Notifications for Rejected Photos
 
 ### Overview

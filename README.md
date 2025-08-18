@@ -19,6 +19,16 @@ A premium web portal exclusively for owners at Sandpiper Run, a luxury oceanfron
   - AdminDashboardMagicBento.tsx: Search admin dashboard events
 - See DEV_SERVER_TROUBLESHOOTING.md for troubleshooting
 
+**2025-08-18 Update:**
+
+- Magic Bento Admin Dashboard is the default at `/admin` (legacy remains at `/admin/legacy`).
+- MagicUI cleanup complete: removed unused imports in `src/components/magicui/bento-grid.tsx` and marked deprecated prop in `bento-card.tsx` as intentional no-op to satisfy strict TypeScript settings (`noUnusedLocals`, `noUnusedParameters`).
+- Supermemory.ai integration confirmed across major components and all photo features (Photos, PhotoGalleryUpload, CircularGallery, PhotoApprovalSystem) for AI-powered search and metadata.
+- Tailwind/PostCSS setup validated: `postcss.config.js` uses `tailwindcss()` + `autoprefixer()`; styling renders correctly after cache clears. Cross-browser prefixing is active.
+- Security: DOMPurify sanitization retained in `src/pages/News.tsx`; CSP/Referrer-Policy meta retained in `index.html`. EXIF stripping in uploads was reverted per preference (raw files, original extensions).
+- Current tasks: resolve remaining project-wide TypeScript "unused" warnings in a few pages; deploy `get_admin_dashboard_stats` SQL function to populate admin stats (see `admin_features_setup.sql` or `spr_hoa_unified_setup.sql`).
+
+
 ---
 
 ## CSS/Tailwind/Styling Not Loading? (2025-08-11)

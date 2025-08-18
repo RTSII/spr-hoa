@@ -11,6 +11,12 @@ After some edits, the app loaded with only browser default styles—no Tailwind 
 - Corrupted Vite cache or build artifacts
 - Config errors in `vite.config.ts`, `tailwind.config.js`, or `postcss.config.js`
 
+## [2025-08-18] Updates
+
+- Admin dashboard stats require deploying `get_admin_dashboard_stats` via Supabase SQL Editor (see `admin_features_setup.sql` or `spr_hoa_unified_setup.sql`). This is a deployment step, not a runtime bug.
+- Some TypeScript "unused" warnings may appear in pages outside MagicUI; MagicUI components are fully cleaned and pass strict `noUnusedLocals/noUnusedParameters`.
+- Cross-browser CSS prefixing confirmed: `postcss.config.js` includes `tailwindcss()` + `autoprefixer()`. If you see browser-specific styling differences, clear caches and rebuild.
+
 ### Solution
 
 - Verified `index.css` import in `main.tsx`

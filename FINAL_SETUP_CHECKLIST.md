@@ -52,6 +52,10 @@ WHERE u.email = 'rob@ursllc.com';
   - Clear `.vite`, `dist`, `node_modules`, and lock files, then reinstall and restart the dev server
   - Check for syntax errors in CSS/Tailwind files
 
+- [ ] Admin Dashboard Stats: Deploy the `get_admin_dashboard_stats` SQL function so the admin dashboard shows live stats.
+  - Open Supabase SQL Editor and copy the function from `admin_features_setup.sql` (or `spr_hoa_unified_setup.sql`).
+  - Run the function definition to create it in your database.
+
 ```sql
 -- Should show empty initially
 SELECT * FROM admin_review_queue;
