@@ -1,8 +1,4 @@
 import React from 'react'
-import dynamic from 'next/dynamic'
-// Use a dynamic import for a modern rich text editor, e.g., React Quill or similar
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false })
-import 'react-quill/dist/quill.snow.css'
 
 interface RichTextEditorProps {
   value: string
@@ -11,21 +7,13 @@ interface RichTextEditorProps {
 
 const RichTextEditor: React.FC<RichTextEditorProps> = ({ value, onChange }) => {
   return (
-    <div className="rounded border border-white/20 bg-white/10">
-      <ReactQuill
-        theme="snow"
+    <div className="rounded border border-white/20 bg-white/10 p-2">
+      <textarea
         value={value}
-        onChange={onChange}
-        modules={{
-          toolbar: [
-            [{ header: [1, 2, false] }],
-            ['bold', 'italic', 'underline', 'strike'],
-            [{ list: 'ordered' }, { list: 'bullet' }],
-            ['link', 'image'],
-            ['clean'],
-          ],
-        }}
-        className="text-black"
+        onChange={(e) => onChange(e.target.value)}
+        rows={8}
+        className="w-full resize-y rounded bg-transparent p-2 text-white placeholder-white/60 focus:outline-none focus:ring-2 focus:ring-[var(--spr-blue)]"
+        placeholder="Write your post..."
       />
     </div>
   )

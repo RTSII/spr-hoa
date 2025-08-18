@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { Camera, Upload, CheckCircle, XCircle, AlertTriangle, RefreshCw } from 'lucide-react'
+import { getSignedPhotoUrl } from '@/lib/storage'
 
 interface ProfilePictureUploadProps {
   onUploadComplete: (url: string) => void
@@ -48,16 +49,11 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
 
       if (uploadError) throw uploadError
 
-      // Get public URL
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from('photos').getPublicUrl(filePath)
-
       // Update profile with new picture (pending approval)
       const { error: updateError } = await supabase
         .from('owner_profiles')
         .update({
-          profile_picture_url: publicUrl,
+          profile_picture_url: filePath,
           profile_picture_status: 'pending',
           profile_picture_submitted_at: new Date().toISOString(),
         })
@@ -66,7 +62,7 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
       if (updateError) throw updateError
 
       setUploadStatus('pending')
-      onUploadComplete(publicUrl)
+      onUploadComplete(filePath)
     } catch (error) {
       console.error('Error uploading profile picture:', error)
       alert('Error uploading profile picture. Please try again.')
@@ -117,9 +113,10 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
         setUploadStatus(data.profile_picture_status || 'idle')
         setRejectionReason(data.profile_picture_rejection_reason || '')
 
-        // Set preview URL if available
+        // Resolve to a signed URL for preview when available
         if (data.profile_picture_url && !previewUrl) {
-          setPreviewUrl(data.profile_picture_url)
+          const signed = await getSignedPhotoUrl(data.profile_picture_url)
+          if (signed) setPreviewUrl(signed)
         }
       }
     } catch (error) {
@@ -141,6 +138,21 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
       }
     }
   }, [user])
+
+  // When parent provides an existing currentPicture (path or URL), sign it for display
+  useEffect(() => {
+    let active = true
+    const run = async () => {
+      if (currentPicture && !selectedFile) {
+        const signed = await getSignedPhotoUrl(currentPicture)
+        if (signed && active) setPreviewUrl(signed)
+      }
+    }
+    run()
+    return () => {
+      active = false
+    }
+  }, [currentPicture, selectedFile])
 
   const getStatusMessage = () => {
     switch (uploadStatus) {
@@ -173,12 +185,7 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
     }
   }
 
-  const resetUpload = () => {
-    setUploadStatus('idle')
-    setRejectionReason('')
-    setPreviewUrl(null)
-    setSelectedFile(null)
-  }
+  // Removed unused resetUpload to satisfy lints
 
   const refreshStatus = () => {
     checkCurrentStatus()
@@ -326,7 +333,7 @@ const ProfilePictureUpload: React.FC<ProfilePictureUploadProps> = ({
                     type="file"
                     accept="image/*"
                     onChange={handleFileChange}
-                    disabled={uploading || uploadStatus === 'pending'}
+                    disabled={uploading}
                     className="hidden"
                   />
                 </label>

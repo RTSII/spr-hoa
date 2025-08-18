@@ -6,7 +6,7 @@ interface BentoCardProps {
   className?: string
   enableStars?: boolean
   enableSpotlight?: boolean // deprecated: no-op to satisfy existing callers
-  enableBorderGlow?: boolean // deprecated: no-op (we removed glow)
+  enableBorderGlow?: boolean // when true, apply subtle glow and intensify on hover
   disableAnimations?: boolean
   spotlightRadius?: number
   particleCount?: number
@@ -34,6 +34,8 @@ const BentoCard: React.FC<BentoCardProps> = ({
 }) => {
   const cardRef = useRef<HTMLDivElement>(null)
   // hover state no longer needed; effects are purely transform-based
+  // explicitly mark deprecated prop as intentionally unused for TS/ESLint
+  void _enableSpotlight
 
   useEffect(() => {
     if (disableAnimations || !cardRef.current) return
@@ -68,8 +70,8 @@ const BentoCard: React.FC<BentoCardProps> = ({
       if (enableTilt) {
         const centerX = rect.width / 2
         const centerY = rect.height / 2
-        const rotateX = (y - centerY) / 12 // slightly softer
-        const rotateY = (centerX - x) / 12
+        const rotateX = (y - centerY) / 8 // stronger tilt for visibility on smaller cards
+        const rotateY = (centerX - x) / 8
 
         gsap.to(card, {
           rotationX: rotateX,
@@ -94,6 +96,18 @@ const BentoCard: React.FC<BentoCardProps> = ({
       }
     }
 
+    // Hover enter/leave to animate glow
+    const handleMouseEnter = () => {
+      if (!card) return
+      if (_enableBorderGlow) {
+        gsap.to(card, {
+          boxShadow: `inset 0 0 0 1px rgba(${glowColor}, 0.5), 0 0 36px rgba(${glowColor}, 0.35)`,
+          duration: 0.25,
+          ease: 'power2.out',
+        })
+      }
+    }
+
     // Handle mouse leave
     const handleMouseLeave = () => {
       if (!card) return
@@ -109,6 +123,15 @@ const BentoCard: React.FC<BentoCardProps> = ({
         duration: 0.4,
         ease: 'power2.out',
       })
+
+      // Reset glow to base intensity
+      if (_enableBorderGlow) {
+        gsap.to(card, {
+          boxShadow: `inset 0 0 0 1px rgba(${glowColor}, 0.35), 0 0 24px rgba(${glowColor}, 0.18)`,
+          duration: 0.25,
+          ease: 'power2.out',
+        })
+      }
     }
 
     // Handle click effect
@@ -148,6 +171,7 @@ const BentoCard: React.FC<BentoCardProps> = ({
       card.addEventListener('mousemove', handleMouseMove)
     }
 
+    card.addEventListener('mouseenter', handleMouseEnter)
     card.addEventListener('mouseleave', handleMouseLeave)
 
     if (clickEffect) {
@@ -158,6 +182,7 @@ const BentoCard: React.FC<BentoCardProps> = ({
     return () => {
       if (card) {
         card.removeEventListener('mousemove', handleMouseMove)
+        card.removeEventListener('mouseenter', handleMouseEnter)
         card.removeEventListener('mouseleave', handleMouseLeave)
         card.removeEventListener('click', handleClick)
 
@@ -174,6 +199,7 @@ const BentoCard: React.FC<BentoCardProps> = ({
     enableStars,
     particleCount,
     enableTilt,
+    enableMagnetism,
     glowColor,
     spotlightRadius,
     clickEffect,
@@ -182,7 +208,16 @@ const BentoCard: React.FC<BentoCardProps> = ({
   return (
     <div
       ref={cardRef}
-      className={`relative overflow-hidden rounded-xl border border-white/10 bg-white/5 p-6 transition-all duration-300 will-change-transform ${className}`}
+      className={`relative overflow-hidden rounded-xl border-2 border-transparent bg-white/10 backdrop-blur-xl p-6 transition-all duration-300 will-change-transform ${className}`}
+      style={
+        _enableBorderGlow
+          ? {
+              // Blue-ish glow controlled by glowColor (expects "r, g, b")
+              // Subtle base; hover intensity is animated on mouse enter
+              boxShadow: `inset 0 0 0 1px rgba(${glowColor}, 0.35), 0 0 24px rgba(${glowColor}, 0.18)`,
+            }
+          : undefined
+      }
       onClick={onClick}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}

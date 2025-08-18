@@ -5,9 +5,7 @@ import {
   Plus,
   Edit3,
   Trash2,
-  Eye,
   Search,
-  Filter,
   Calendar,
   Tag,
   BarChart3,
@@ -21,13 +19,12 @@ import {
 import { adminService, NewsPost } from '@/lib/adminService'
 
 interface NewsManagementSystemProps {
-  onClose: () => void
+  onClose?: () => void
 }
 
-const NewsManagementSystem: React.FC<NewsManagementSystemProps> = ({ onClose }) => {
+const NewsManagementSystem: React.FC<NewsManagementSystemProps> = () => {
   const [posts, setPosts] = useState<NewsPost[]>([])
   const [loading, setLoading] = useState(false)
-  const [selectedPosts, setSelectedPosts] = useState<string[]>([])
   const [filter, setFilter] = useState<'all' | 'draft' | 'published' | 'archived'>('all')
   const [searchTerm, setSearchTerm] = useState('')
   const [editingPost, setEditingPost] = useState<NewsPost | null>(null)
@@ -206,368 +203,355 @@ const NewsManagementSystem: React.FC<NewsManagementSystemProps> = ({ onClose }) 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="flex h-[90vh] w-full max-w-7xl flex-col overflow-hidden rounded-2xl border border-white/20 bg-slate-900/95 backdrop-blur-xl"
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 p-6">
-          <div className="flex items-center space-x-3">
-            <Newspaper className="h-6 w-6 text-purple-400" />
-            <h2 className="text-2xl font-bold text-white">News Management</h2>
-            <span className="rounded-full bg-purple-500/20 px-3 py-1 text-xs text-purple-300">
-              {filteredPosts.length} posts
-            </span>
-          </div>
-          <div className="flex items-center space-x-3">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowCreatePost(true)}
-              className="flex items-center space-x-2 rounded-lg border border-purple-500/30 bg-purple-500/20 px-4 py-2 text-purple-400 transition-all hover:bg-purple-500/30"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Create Post</span>
-            </motion.button>
-            <button onClick={onClose} className="text-white/70 transition-colors hover:text-white">
-              ✕
-            </button>
-          </div>
+    <div className="relative">
+      {/* Top toolbar (count + create) */}
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <Newspaper className="h-5 w-5 text-purple-400" />
+          <span className="rounded-full bg-purple-500/20 px-3 py-1 text-xs text-purple-300">
+            {filteredPosts.length} posts
+          </span>
         </div>
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setShowCreatePost(true)}
+          className="flex items-center space-x-2 rounded-lg border border-purple-500/30 bg-purple-500/20 px-4 py-2 text-purple-300 transition-all hover:bg-purple-500/30"
+        >
+          <Plus className="h-4 w-4" />
+          <span>Create Post</span>
+        </motion.button>
+      </div>
 
-        {/* Controls */}
-        <div className="space-y-4 border-b border-white/10 p-6">
-          <div className="flex items-center space-x-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-white/50" />
-              <input
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-lg border border-white/20 bg-black/30 py-3 pl-10 pr-4 text-white placeholder-white/50 focus:border-purple-400 focus:outline-none"
-                placeholder="Search news posts..."
-              />
-            </div>
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value as any)}
-              className="rounded-lg border border-white/20 bg-black/30 px-4 py-3 text-white focus:border-purple-400 focus:outline-none"
-            >
-              <option value="all">All Posts</option>
-              <option value="draft">Drafts</option>
-              <option value="published">Published</option>
-              <option value="archived">Archived</option>
-            </select>
+      {/* Controls */}
+      <div className="space-y-4 border-b border-white/10 pb-6">
+        <div className="flex items-center space-x-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-white/50" />
+            <input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-lg border border-white/20 bg-black/30 py-3 pl-10 pr-4 text-white placeholder-white/50 focus:border-purple-400 focus:outline-none"
+              placeholder="Search news posts..."
+            />
           </div>
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value as any)}
+            className="rounded-lg border border-white/20 bg-black/30 px-4 py-3 text-white focus:border-purple-400 focus:outline-none"
+          >
+            <option value="all">All Posts</option>
+            <option value="draft">Drafts</option>
+            <option value="published">Published</option>
+            <option value="archived">Archived</option>
+          </select>
         </div>
+      </div>
 
-        {/* Posts List */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {loading ? (
-            <div className="flex h-full items-center justify-center">
-              <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-purple-400"></div>
-            </div>
-          ) : filteredPosts.length === 0 ? (
-            <div className="flex h-full flex-col items-center justify-center text-white/60">
-              <Newspaper className="mb-4 h-16 w-16 opacity-50" />
-              <h3 className="mb-2 text-xl font-semibold">No Posts Found</h3>
-              <p>Create your first news post to get started.</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {filteredPosts.map((post) => {
-                const StatusIcon = statusIcon(post.status)
-                return (
-                  <motion.div
-                    key={post.id}
-                    layout
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="rounded-lg border border-white/10 bg-black/20 p-6 transition-all hover:border-purple-400/50"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="mb-2 flex items-center space-x-3">
-                          <h3 className="text-lg font-semibold text-white">{post.title}</h3>
-                          <span
-                            className={`flex items-center space-x-1 rounded px-2 py-1 text-xs ${statusColor(post.status)}`}
-                          >
-                            <StatusIcon className="h-3 w-3" />
-                            <span className="capitalize">{post.status}</span>
-                          </span>
-                          <span className="rounded bg-blue-500/20 px-2 py-1 text-xs capitalize text-blue-300">
-                            {post.category}
-                          </span>
-                        </div>
-
-                        <p className="mb-3 line-clamp-2 text-white/80">
-                          {post.excerpt || post.content.substring(0, 150) + '...'}
-                        </p>
-
-                        <div className="flex items-center space-x-4 text-sm text-white/60">
-                          <span className="flex items-center space-x-1">
-                            <Calendar className="h-4 w-4" />
-                            <span>
-                              {post.published_at
-                                ? `Published ${new Date(post.published_at).toLocaleDateString()}`
-                                : `Created ${new Date(post.created_at).toLocaleDateString()}`}
-                            </span>
-                          </span>
-                          <span className="flex items-center space-x-1">
-                            <BarChart3 className="h-4 w-4" />
-                            <span>{post.views_count} views</span>
-                          </span>
-                          {post.tags && post.tags.length > 0 && (
-                            <div className="flex items-center space-x-1">
-                              <Tag className="h-4 w-4" />
-                              <div className="flex space-x-1">
-                                {post.tags.slice(0, 3).map((tag, idx) => (
-                                  <span
-                                    key={idx}
-                                    className="rounded bg-white/10 px-1 py-0.5 text-xs"
-                                  >
-                                    {tag}
-                                  </span>
-                                ))}
-                                {post.tags.length > 3 && (
-                                  <span className="text-xs">+{post.tags.length - 3}</span>
-                                )}
-                              </div>
-                            </div>
-                          )}
-                        </div>
+      {/* Posts List */}
+      <div className="pt-6">
+        {loading ? (
+          <div className="flex h-40 items-center justify-center">
+            <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-purple-400"></div>
+          </div>
+        ) : filteredPosts.length === 0 ? (
+          <div className="flex h-40 flex-col items-center justify-center text-white/60">
+            <Newspaper className="mb-4 h-16 w-16 opacity-50" />
+            <h3 className="mb-2 text-xl font-semibold">No Posts Found</h3>
+            <p>Create your first news post to get started.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredPosts.map((post) => {
+              const StatusIcon = statusIcon(post.status)
+              return (
+                <motion.div
+                  key={post.id}
+                  layout
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="rounded-lg border border-white/10 bg-black/20 p-6 transition-all hover:border-purple-400/50"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="mb-2 flex items-center space-x-3">
+                        <h3 className="text-lg font-semibold text-white">{post.title}</h3>
+                        <span
+                          className={`flex items-center space-x-1 rounded px-2 py-1 text-xs ${statusColor(post.status)}`}
+                        >
+                          <StatusIcon className="h-3 w-3" />
+                          <span className="capitalize">{post.status}</span>
+                        </span>
+                        <span className="rounded bg-blue-500/20 px-2 py-1 text-xs capitalize text-blue-300">
+                          {post.category}
+                        </span>
                       </div>
 
-                      <div className="ml-4 flex items-center space-x-2">
-                        {post.status === 'draft' && (
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => handlePublishPost(post.id)}
-                            disabled={loading}
-                            className="rounded border border-green-500/30 bg-green-500/20 p-2 text-green-400 transition-all hover:bg-green-500/30 disabled:opacity-50"
-                            title="Publish"
-                          >
-                            <Send className="h-4 w-4" />
-                          </motion.button>
+                      <p className="mb-3 line-clamp-2 text-white/80">
+                        {post.excerpt || post.content.substring(0, 150) + '...'}
+                      </p>
+
+                      <div className="flex items-center space-x-4 text-sm text-white/60">
+                        <span className="flex items-center space-x-1">
+                          <Calendar className="h-4 w-4" />
+                          <span>
+                            {post.published_at
+                              ? `Published ${new Date(post.published_at).toLocaleDateString()}`
+                              : `Created ${new Date(post.created_at).toLocaleDateString()}`}
+                          </span>
+                        </span>
+                        <span className="flex items-center space-x-1">
+                          <BarChart3 className="h-4 w-4" />
+                          <span>{post.views_count} views</span>
+                        </span>
+                        {post.tags && post.tags.length > 0 && (
+                          <div className="flex items-center space-x-1">
+                            <Tag className="h-4 w-4" />
+                            <div className="flex space-x-1">
+                              {post.tags.slice(0, 3).map((tag, idx) => (
+                                <span
+                                  key={idx}
+                                  className="rounded bg-white/10 px-1 py-0.5 text-xs"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                              {post.tags.length > 3 && (
+                                <span className="text-xs">+{post.tags.length - 3}</span>
+                              )}
+                            </div>
+                          </div>
                         )}
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => startEditing(post)}
-                          className="rounded border border-blue-500/30 bg-blue-500/20 p-2 text-blue-400 transition-all hover:bg-blue-500/30"
-                          title="Edit"
-                        >
-                          <Edit3 className="h-4 w-4" />
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => handleDeletePost(post.id)}
-                          className="rounded border border-red-500/30 bg-red-500/20 p-2 text-red-400 transition-all hover:bg-red-500/30"
-                          title="Delete"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </motion.button>
                       </div>
                     </div>
-                  </motion.div>
-                )
-              })}
-            </div>
-          )}
-        </div>
 
-        {/* Create/Edit Post Modal */}
-        <AnimatePresence>
-          {(showCreatePost || editingPost) && (
+                    <div className="ml-4 flex items-center space-x-2">
+                      {post.status === 'draft' && (
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => handlePublishPost(post.id)}
+                          disabled={loading}
+                          className="rounded border border-green-500/30 bg-green-500/20 p-2 text-green-400 transition-all hover:bg-green-500/30 disabled:opacity-50"
+                          title="Publish"
+                        >
+                          <Send className="h-4 w-4" />
+                        </motion.button>
+                      )}
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => startEditing(post)}
+                        className="rounded border border-blue-500/30 bg-blue-500/20 p-2 text-blue-400 transition-all hover:bg-blue-500/30"
+                        title="Edit"
+                      >
+                        <Edit3 className="h-4 w-4" />
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => handleDeletePost(post.id)}
+                        className="rounded border border-red-500/30 bg-red-500/20 p-2 text-red-400 transition-all hover:bg-red-500/30"
+                        title="Delete"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </motion.button>
+                    </div>
+                  </div>
+                </motion.div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Create/Edit Post Modal */}
+      <AnimatePresence>
+        {(showCreatePost || editingPost) && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 z-10 flex items-center justify-center bg-black/70 p-4"
+          >
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 z-10 flex items-center justify-center bg-black/80 p-4"
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.95 }}
+              className="max-h-[90%] w-full max-w-4xl overflow-y-auto rounded-xl border border-white/10 bg-slate-800"
             >
-              <motion.div
-                initial={{ scale: 0.9 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0.9 }}
-                className="max-h-[90%] w-full max-w-4xl overflow-y-auto rounded-xl bg-slate-800"
-              >
-                <div className="p-6">
-                  <div className="mb-6 flex items-center justify-between">
-                    <h3 className="text-xl font-bold text-white">
-                      {editingPost ? 'Edit Post' : 'Create New Post'}
-                    </h3>
-                    <button
+              <div className="p-6">
+                <div className="mb-6 flex items-center justify-between">
+                  <h3 className="text-xl font-bold text-white">
+                    {editingPost ? 'Edit Post' : 'Create New Post'}
+                  </h3>
+                  <button
+                    onClick={() => {
+                      resetForm()
+                      setShowCreatePost(false)
+                      setEditingPost(null)
+                    }}
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/20 bg-white/5 text-white/80 transition-colors hover:text-white"
+                    aria-label="Close"
+                    title="Close"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  {/* Title */}
+                  <div>
+                    <label className="mb-2 block font-medium text-white">Title</label>
+                    <input
+                      value={postForm.title}
+                      onChange={(e) => setPostForm({ ...postForm, title: e.target.value })}
+                      className="w-full rounded-lg border border-white/20 bg-black/30 p-3 text-white placeholder-white/50 focus:border-purple-400 focus:outline-none"
+                      placeholder="Enter post title..."
+                    />
+                  </div>
+
+                  {/* Category and Status */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="mb-2 block font-medium text-white">Category</label>
+                      <select
+                        value={postForm.category}
+                        onChange={(e) => setPostForm({ ...postForm, category: e.target.value })}
+                        className="w-full rounded-lg border border-white/20 bg-black/30 p-3 text-white focus:border-purple-400 focus:outline-none"
+                      >
+                        {categories.map((cat) => (
+                          <option key={cat.value} value={cat.value}>
+                            {cat.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="mb-2 block font-medium text-white">Status</label>
+                      <select
+                        value={postForm.status}
+                        onChange={(e) =>
+                          setPostForm({
+                            ...postForm,
+                            status: e.target.value as NewsPost['status'],
+                          })
+                        }
+                        className="w-full rounded-lg border border-white/20 bg-black/30 p-3 text-white focus:border-purple-400 focus:outline-none"
+                      >
+                        <option value="draft">Draft</option>
+                        <option value="published">Published</option>
+                        <option value="archived">Archived</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Excerpt */}
+                  <div>
+                    <label className="mb-2 block font-medium text-white">Excerpt</label>
+                    <textarea
+                      value={postForm.excerpt}
+                      onChange={(e) => setPostForm({ ...postForm, excerpt: e.target.value })}
+                      rows={2}
+                      className="w-full resize-none rounded-lg border border-white/20 bg-black/30 p-3 text-white placeholder-white/50 focus:border-purple-400 focus:outline-none"
+                      placeholder="Brief description or excerpt..."
+                    />
+                  </div>
+
+                  {/* Content */}
+                  <div>
+                    <label className="mb-2 block font-medium text-white">Content</label>
+                    <textarea
+                      value={postForm.content}
+                      onChange={(e) => setPostForm({ ...postForm, content: e.target.value })}
+                      rows={10}
+                      className="w-full resize-none rounded-lg border border-white/20 bg-black/30 p-3 text-white placeholder-white/50 focus:border-purple-400 focus:outline-none"
+                      placeholder="Write your post content here..."
+                    />
+                  </div>
+
+                  {/* Tags */}
+                  <div>
+                    <label className="mb-2 block font-medium text-white">Tags</label>
+                    <div className="mb-2 flex flex-wrap gap-2">
+                      {postForm.tags.map((tag, idx) => (
+                        <span
+                          key={idx}
+                          className="flex items-center space-x-1 rounded bg-purple-500/20 px-2 py-1 text-sm text-purple-300"
+                        >
+                          <span>{tag}</span>
+                          <button
+                            onClick={() => removeTag(tag)}
+                            className="text-purple-300 hover:text-white"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        value={newTag}
+                        onChange={(e) => setNewTag(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && addTag()}
+                        className="flex-1 rounded-lg border border-white/20 bg-black/30 p-3 text-white placeholder-white/50 focus:border-purple-400 focus:outline-none"
+                        placeholder="Add tag..."
+                      />
+                      <button
+                        onClick={addTag}
+                        className="rounded-lg border border-purple-500/30 bg-purple-500/20 px-4 py-3 text-purple-400 transition-all hover:bg-purple-500/30"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Featured Image URL */}
+                  <div>
+                    <label className="mb-2 block font-medium text-white">Featured Image URL</label>
+                    <input
+                      value={postForm.featured_image_url}
+                      onChange={(e) =>
+                        setPostForm({ ...postForm, featured_image_url: e.target.value })
+                      }
+                      className="w-full rounded-lg border border-white/20 bg-black/30 p-3 text-white placeholder-white/50 focus:border-purple-400 focus:outline-none"
+                      placeholder="https://example.com/image.jpg"
+                    />
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex space-x-3 pt-4">
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={
+                        editingPost ? () => handleUpdatePost(editingPost.id) : handleCreatePost
+                      }
+                      disabled={loading || !postForm.title.trim() || !postForm.content.trim()}
+                      className="flex flex-1 items-center justify-center space-x-2 rounded-lg border border-purple-500/30 bg-purple-500/20 py-3 font-medium text-purple-400 transition-all hover:bg-purple-500/30 disabled:opacity-50"
+                    >
+                      <Save className="h-4 w-4" />
+                      <span>{editingPost ? 'Update Post' : 'Create Post'}</span>
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                       onClick={() => {
                         resetForm()
                         setShowCreatePost(false)
                         setEditingPost(null)
                       }}
-                      className="text-white/70 hover:text-white"
+                      className="rounded-lg border border-gray-500/30 bg-gray-500/20 px-6 py-3 text-gray-400 transition-all hover:bg-gray-500/30"
                     >
-                      ✕
-                    </button>
-                  </div>
-
-                  <div className="space-y-6">
-                    {/* Title */}
-                    <div>
-                      <label className="mb-2 block font-medium text-white">Title</label>
-                      <input
-                        value={postForm.title}
-                        onChange={(e) => setPostForm({ ...postForm, title: e.target.value })}
-                        className="w-full rounded-lg border border-white/20 bg-black/30 p-3 text-white placeholder-white/50 focus:border-purple-400 focus:outline-none"
-                        placeholder="Enter post title..."
-                      />
-                    </div>
-
-                    {/* Category and Status */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <label className="mb-2 block font-medium text-white">Category</label>
-                        <select
-                          value={postForm.category}
-                          onChange={(e) => setPostForm({ ...postForm, category: e.target.value })}
-                          className="w-full rounded-lg border border-white/20 bg-black/30 p-3 text-white focus:border-purple-400 focus:outline-none"
-                        >
-                          {categories.map((cat) => (
-                            <option key={cat.value} value={cat.value}>
-                              {cat.label}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="mb-2 block font-medium text-white">Status</label>
-                        <select
-                          value={postForm.status}
-                          onChange={(e) =>
-                            setPostForm({
-                              ...postForm,
-                              status: e.target.value as NewsPost['status'],
-                            })
-                          }
-                          className="w-full rounded-lg border border-white/20 bg-black/30 p-3 text-white focus:border-purple-400 focus:outline-none"
-                        >
-                          <option value="draft">Draft</option>
-                          <option value="published">Published</option>
-                          <option value="archived">Archived</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    {/* Excerpt */}
-                    <div>
-                      <label className="mb-2 block font-medium text-white">Excerpt</label>
-                      <textarea
-                        value={postForm.excerpt}
-                        onChange={(e) => setPostForm({ ...postForm, excerpt: e.target.value })}
-                        rows={2}
-                        className="w-full resize-none rounded-lg border border-white/20 bg-black/30 p-3 text-white placeholder-white/50 focus:border-purple-400 focus:outline-none"
-                        placeholder="Brief description or excerpt..."
-                      />
-                    </div>
-
-                    {/* Content */}
-                    <div>
-                      <label className="mb-2 block font-medium text-white">Content</label>
-                      <textarea
-                        value={postForm.content}
-                        onChange={(e) => setPostForm({ ...postForm, content: e.target.value })}
-                        rows={10}
-                        className="w-full resize-none rounded-lg border border-white/20 bg-black/30 p-3 text-white placeholder-white/50 focus:border-purple-400 focus:outline-none"
-                        placeholder="Write your post content here..."
-                      />
-                    </div>
-
-                    {/* Tags */}
-                    <div>
-                      <label className="mb-2 block font-medium text-white">Tags</label>
-                      <div className="mb-2 flex flex-wrap gap-2">
-                        {postForm.tags.map((tag, idx) => (
-                          <span
-                            key={idx}
-                            className="flex items-center space-x-1 rounded bg-purple-500/20 px-2 py-1 text-sm text-purple-300"
-                          >
-                            <span>{tag}</span>
-                            <button
-                              onClick={() => removeTag(tag)}
-                              className="text-purple-300 hover:text-white"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input
-                          value={newTag}
-                          onChange={(e) => setNewTag(e.target.value)}
-                          onKeyPress={(e) => e.key === 'Enter' && addTag()}
-                          className="flex-1 rounded-lg border border-white/20 bg-black/30 p-3 text-white placeholder-white/50 focus:border-purple-400 focus:outline-none"
-                          placeholder="Add tag..."
-                        />
-                        <button
-                          onClick={addTag}
-                          className="rounded-lg border border-purple-500/30 bg-purple-500/20 px-4 py-3 text-purple-400 transition-all hover:bg-purple-500/30"
-                        >
-                          Add
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Featured Image URL */}
-                    <div>
-                      <label className="mb-2 block font-medium text-white">
-                        Featured Image URL
-                      </label>
-                      <input
-                        value={postForm.featured_image_url}
-                        onChange={(e) =>
-                          setPostForm({ ...postForm, featured_image_url: e.target.value })
-                        }
-                        className="w-full rounded-lg border border-white/20 bg-black/30 p-3 text-white placeholder-white/50 focus:border-purple-400 focus:outline-none"
-                        placeholder="https://example.com/image.jpg"
-                      />
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex space-x-3 pt-4">
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={
-                          editingPost ? () => handleUpdatePost(editingPost.id) : handleCreatePost
-                        }
-                        disabled={loading || !postForm.title.trim() || !postForm.content.trim()}
-                        className="flex flex-1 items-center justify-center space-x-2 rounded-lg border border-purple-500/30 bg-purple-500/20 py-3 font-medium text-purple-400 transition-all hover:bg-purple-500/30 disabled:opacity-50"
-                      >
-                        <Save className="h-4 w-4" />
-                        <span>{editingPost ? 'Update Post' : 'Create Post'}</span>
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => {
-                          resetForm()
-                          setShowCreatePost(false)
-                          setEditingPost(null)
-                        }}
-                        className="rounded-lg border border-gray-500/30 bg-gray-500/20 px-6 py-3 text-gray-400 transition-all hover:bg-gray-500/30"
-                      >
-                        Cancel
-                      </motion.button>
-                    </div>
+                      Cancel
+                    </motion.button>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

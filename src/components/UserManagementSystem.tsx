@@ -1,25 +1,6 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect } from 'react'
-import {
-  Users,
-  Search,
-  Filter,
-  Edit3,
-  Trash2,
-  UserPlus,
-  Mail,
-  Phone,
-  Home,
-  Calendar,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
-  MoreVertical,
-  Download,
-  Shield,
-  Eye,
-  EyeOff,
-} from 'lucide-react'
+import { X, Users, Search, Edit3, Trash2, UserPlus, Mail, Phone, CheckCircle, XCircle, Eye, EyeOff } from 'lucide-react'
 import { adminService } from '@/lib/adminService'
 
 interface User {
@@ -42,33 +23,18 @@ interface User {
   }
 }
 
-interface UserManagementSystemProps {
-  onClose: () => void
-}
-
-const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) => {
+const UserManagementSystem: React.FC = () => {
   const [users, setUsers] = useState<User[]>([])
   const [selectedUsers, setSelectedUsers] = useState<string[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [filter, setFilter] = useState<'all' | 'active' | 'directory_opt_in' | 'recent'>('all')
   const [loading, setLoading] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
-  const [showAddUser, setShowAddUser] = useState(false)
   const [sortBy, setSortBy] = useState<'name' | 'unit' | 'date'>('name')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
 
   // New user form state
-  const [newUser, setNewUser] = useState({
-    first_name: '',
-    last_name: '',
-    email: '',
-    unit_number: '',
-    phone: '',
-    directory_opt_in: true,
-    show_email: true,
-    show_phone: false,
-    show_unit: true,
-  })
+  // (Add User form to be implemented in a future update)
 
   useEffect(() => {
     loadUsers()
@@ -77,8 +43,8 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
   const loadUsers = async () => {
     try {
       setLoading(true)
-      const data = await adminService.getAllUsers()
-      setUsers(data || [])
+      const data = (await adminService.getAllUsers()) as any[]
+      setUsers((data || []).map((r: any) => ({ ...r, email: r?.email ?? r?.user?.email ?? '' })))
     } catch (error) {
       console.error('Error loading users:', error)
     } finally {
@@ -194,15 +160,15 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+    <div className="relative">
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
+        initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="flex h-[90vh] w-full max-w-7xl flex-col overflow-hidden rounded-2xl border border-white/20 bg-slate-900/95 backdrop-blur-xl"
+        exit={{ opacity: 0, scale: 0.98 }}
+        className="flex w-full flex-col"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 p-6">
+        {/* Header (BentoCard provides its own close button) */}
+        <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Users className="h-6 w-6 text-blue-400" />
             <h2 className="text-2xl font-bold text-white">User Management</h2>
@@ -214,15 +180,11 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => setShowAddUser(true)}
               className="flex items-center space-x-2 rounded-lg border border-blue-500/30 bg-blue-500/20 px-4 py-2 text-blue-400 transition-all hover:bg-blue-500/30"
             >
               <UserPlus className="h-4 w-4" />
               <span>Add User</span>
             </motion.button>
-            <button onClick={onClose} className="text-white/70 transition-colors hover:text-white">
-              ✕
-            </button>
           </div>
         </div>
 
@@ -496,9 +458,11 @@ const UserManagementSystem: React.FC<UserManagementSystemProps> = ({ onClose }) 
                     <h3 className="text-xl font-bold text-white">Edit User</h3>
                     <button
                       onClick={() => setEditingUser(null)}
-                      className="text-white/70 hover:text-white"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/20 bg-white/5 text-white/80 transition-colors hover:text-white"
+                      aria-label="Close"
+                      title="Close"
                     >
-                      ✕
+                      <X className="h-4 w-4" />
                     </button>
                   </div>
 

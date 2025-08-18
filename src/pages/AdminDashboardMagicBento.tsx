@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Users,
@@ -9,7 +9,9 @@ import {
   Newspaper,
   TestTube,
   Server,
+  X,
 } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import AdminMessaging from '@/components/AdminMessaging'
 import AdminEmailSystem from '@/components/AdminEmailSystem'
@@ -19,6 +21,8 @@ import UserManagementSystem from '@/components/UserManagementSystem'
 import MCPDashboard from '@/components/MCPDashboard'
 import { BentoCard } from '@/components/magicui'
 import { MCPProvider } from '@/contexts/MCPContext'
+
+import { adminService, AdminStats } from '@/lib/adminService'
 
 type AdminTab =
   | 'overview'
@@ -36,7 +40,41 @@ const AdminDashboardMagicBento: React.FC = () => {
   const [activeTab, setActiveTab] = useState<AdminTab>('overview')
   // Sub-tab for Message Center
   const [messageSubTab, setMessageSubTab] = useState<'site' | 'email'>('site')
+  const navigate = useNavigate()
+  // Overview grid (wide rectangular, no scaling)
+  const gridWrapRef = useRef<HTMLDivElement>(null)
+  const gridRef = useRef<HTMLDivElement>(null)
 
+  // Admin stats for overview cards
+  const [stats, setStats] = useState<AdminStats | null>(null)
+  const [loadingStats, setLoadingStats] = useState(false)
+  const [statsError, setStatsError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let isMounted = true
+    if (activeTab === 'overview') {
+      setLoadingStats(true)
+      adminService
+        .getAdminDashboardStats()
+        .then((data) => {
+          if (!isMounted) return
+          setStats(data)
+          setStatsError(null)
+        })
+        .catch((e: any) => {
+          if (!isMounted) return
+          setStatsError(e?.message || 'Failed to load stats')
+        })
+        .finally(() => {
+          if (!isMounted) return
+          setLoadingStats(false)
+        })
+      return () => {}
+    }
+    return () => {
+      isMounted = false
+    }
+  }, [activeTab])
 
   // Redirect if not admin
   if (!isAdmin) {
@@ -56,46 +94,65 @@ const AdminDashboardMagicBento: React.FC = () => {
         return (
           <div className="flex w-full justify-center">
             <div
+              ref={gridWrapRef}
               className="w-full"
               style={{
-                // horizontal-first sizing, with height safety clamp
+                // Wide rectangular grid: two rows, many columns. No scaling.
                 ['--gap' as any]: '12px',
-                ['--avail' as any]: 'calc(100svh - 360px)', // space kept for hero/header
-                // target width prefers wide rectangle; clamp by height-derived width and viewport width
-                maxWidth: 'min(1100px, 90vw, calc(2 * var(--avail) + var(--gap)))',
+                ['--gridH' as any]: 'min(680px, calc(100svh - 220px))',
+                // Larger container width within viewport
+                maxWidth: 'min(1440px, 96vw)',
+                marginInline: 'auto',
               }}
             >
+              {statsError && (
+                <div className="mb-2 text-center text-[11px] text-red-300">
+                  Failed to load stats. Some counts may be unavailable.
+                </div>
+              )}
               <BentoCard
-                className="w-full p-2 md:p-2.5"
+                className="w-full p-3 md:p-4"
                 glowColor="59, 130, 246"
                 spotlightRadius={200}
                 enableTilt={false}
                 enableMagnetism={false}
+                enableStars={false}
               >
                 <div
+                  ref={gridRef}
                   className="grid"
                   style={
                     {
-                      // square size derives from container width
-                      gridTemplateColumns: 'repeat(4, calc((100% - var(--gap) * 3) / 4))',
-                      gridAutoRows: 'calc((100% - var(--gap) * 3) / 4)',
+                      // 12 columns, 2 rows layout for a wide rectangle
+                      gridTemplateColumns: 'repeat(12, 1fr)',
+                      gridTemplateRows: 'repeat(2, 1fr)',
                       gap: 'var(--gap)',
+                      height: 'var(--gridH)',
                     } as React.CSSProperties
                   }
                 >
                   {/* Message Center Card (largest square) */}
                   <BentoCard
-                    className="aspect-square col-span-2 row-span-2 cursor-pointer select-none p-2 md:p-2.5"
+                    className="col-span-6 row-span-2 h-full cursor-pointer select-none p-3 md:p-4"
                     glowColor="59, 130, 246"
                     spotlightRadius={200}
+                    enableStars={false}
+                    enableTilt={true}
+                    enableMagnetism={true}
+                    enableBorderGlow
                     onClick={() => setActiveTab('messaging')}
                   >
-                    <div className="flex h-full flex-col">
-                      <h2 className="mb-1 flex items-center text-sm font-bold text-white md:mb-1 md:text-base">
+                    <div className="relative flex h-full flex-col">
+                      <div className="absolute right-2 top-2">
+                        <span className="rounded-full bg-blue-500/20 px-2.5 py-0.5 text-[11px] text-blue-200 md:text-xs">
+                          {loadingStats ? '…' : stats ? stats.messages_sent : '-'}
+                        </span>
+                      </div>
+                      <h2 className="mb-1.5 flex items-center text-sm font-bold text-white md:mb-2 md:text-base">
                         <MessageSquare className="mr-1.5 h-3.5 w-3.5 text-blue-400 md:mr-2 md:h-4 md:w-4" />
                         Message Center
                       </h2>
-                      <p className="text-[10px] text-white/60 md:text-[10.5px]">
+                      <p className="text-xs text-white/70 md:text-sm">
                         Open inbox and email tools
                       </p>
                     </div>
@@ -103,82 +160,136 @@ const AdminDashboardMagicBento: React.FC = () => {
 
                   {/* News Management Card (square) */}
                   <BentoCard
-                    className="aspect-square col-span-1 row-span-1 cursor-pointer select-none p-2 md:p-2"
-                    glowColor="236, 72, 153"
+                    className="col-span-2 row-span-1 h-full cursor-pointer select-none p-3 md:p-4"
+                    glowColor="59, 130, 246"
                     spotlightRadius={150}
+                    enableStars={false}
+                    enableTilt={true}
+                    enableMagnetism={true}
+                    enableBorderGlow
                     onClick={() => setActiveTab('news')}
                   >
-                    <div className="flex h-full flex-col">
-                      <h2 className="mb-1 flex items-center text-xs font-bold text-white md:mb-1 md:text-sm">
+                    <div className="relative flex h-full flex-col">
+                      <div className="absolute right-2 top-2">
+                        <span className="rounded-full bg-pink-500/20 px-2.5 py-0.5 text-[11px] text-pink-200 md:text-xs">
+                          {loadingStats ? '…' : stats ? stats.published_news : '-'}
+                        </span>
+                      </div>
+                      <h2 className="mb-1.5 flex items-center text-sm font-bold text-white md:mb-2 md:text-base">
                         <Newspaper className="mr-1.5 h-3 w-3 text-pink-400 md:mr-2 md:h-3.5 md:w-3.5" />
                         News
                       </h2>
-                      <p className="text-[9.5px] text-white/60 md:text-[10px]">Create/Edit Posts</p>
+                      <p className="text-xs text-white/70 md:text-sm">Create/Edit Posts</p>
                     </div>
                   </BentoCard>
 
                   {/* Owner Management Card (square) */}
                   <BentoCard
-                    className="aspect-square col-span-1 row-span-1 cursor-pointer select-none p-2 md:p-2.5"
-                    glowColor="16, 185, 129"
+                    className="col-span-2 row-span-1 h-full cursor-pointer select-none p-3 md:p-4"
+                    glowColor="59, 130, 246"
                     spotlightRadius={150}
+                    enableStars={false}
+                    enableTilt={true}
+                    enableMagnetism={true}
+                    enableBorderGlow
                     onClick={() => setActiveTab('users')}
                   >
-                    <div className="flex h-full flex-col">
-                      <h2 className="mb-1 flex items-center text-xs font-bold text-white md:mb-1 md:text-sm">
+                    <div className="relative flex h-full flex-col">
+                      <div className="absolute right-2 top-2">
+                        <span className="rounded-full bg-green-500/20 px-2.5 py-0.5 text-[11px] text-green-200 md:text-xs">
+                          {loadingStats ? '…' : stats ? stats.total_users : '-'}
+                        </span>
+                      </div>
+                      <h2 className="mb-1.5 flex items-center text-sm font-bold text-white md:mb-2 md:text-base">
                         <Users className="mr-1.5 h-3 w-3 text-green-400 md:mr-2 md:h-3.5 md:w-3.5" />
                         Owners
                       </h2>
-                      <p className="text-[9.5px] text-white/60 md:text-[10px]">Manage Owners</p>
+                      <p className="text-xs text-white/70 md:text-sm">Manage Owners</p>
                     </div>
                   </BentoCard>
 
                   {/* Photo Management Card (square) */}
                   <BentoCard
-                    className="aspect-square col-span-1 row-span-1 cursor-pointer select-none p-2 md:p-2.5"
-                    glowColor="245, 158, 11"
+                    className="col-span-2 row-span-1 h-full cursor-pointer select-none p-3 md:p-4"
+                    glowColor="59, 130, 246"
                     spotlightRadius={150}
+                    enableStars={false}
+                    enableTilt={true}
+                    enableMagnetism={true}
+                    enableBorderGlow
                     onClick={() => setActiveTab('photos')}
                   >
-                    <div className="flex h-full flex-col">
-                      <h2 className="mb-1 flex items-center text-xs font-bold text-white md:mb-1 md:text-sm">
+                    <div className="relative flex h-full flex-col">
+                      <div className="absolute right-2 top-2">
+                        <span className="rounded-full bg-yellow-500/20 px-2.5 py-0.5 text-[11px] text-yellow-200 md:text-xs">
+                          {loadingStats ? '…' : stats ? stats.pending_photos : '-'}
+                        </span>
+                      </div>
+                      <h2 className="mb-1.5 flex items-center text-sm font-bold text-white md:mb-2 md:text-base">
                         <Camera className="mr-1.5 h-3 w-3 text-yellow-400 md:mr-2 md:h-3.5 md:w-3.5" />
                         Photos
                       </h2>
-                      <p className="text-[9.5px] text-white/60 md:text-[10px]">Manage Photos</p>
+                      <p className="text-xs text-white/70 md:text-sm">Manage Photos</p>
                     </div>
                   </BentoCard>
 
                   {/* System Settings Card (square) */}
                   <BentoCard
-                    className="aspect-square col-span-1 row-span-1 cursor-pointer select-none p-2 md:p-2.5"
-                    glowColor="99, 102, 241"
+                    className="col-span-2 row-span-1 h-full cursor-pointer select-none p-3 md:p-4"
+                    glowColor="59, 130, 246"
                     spotlightRadius={150}
+                    enableStars={false}
+                    enableTilt={true}
+                    enableMagnetism={true}
+                    enableBorderGlow
                     onClick={() => setActiveTab('settings')}
                   >
                     <div className="flex h-full flex-col">
-                      <h2 className="mb-1 flex items-center text-xs font-bold text-white md:mb-1 md:text-sm">
+                      <h2 className="mb-1.5 flex items-center text-sm font-bold text-white md:mb-2 md:text-base">
                         <Settings className="mr-1.5 h-3 w-3 text-indigo-400 md:mr-2 md:h-3.5 md:w-3.5" />
                         Settings
                       </h2>
-                      <p className="text-[9.5px] text-white/60 md:text-[10px]">System Settings</p>
+                      <p className="text-xs text-white/70 md:text-sm">System Settings</p>
                     </div>
                   </BentoCard>
                   {/* ReactBits MCP Integration Card (square) */}
                   <BentoCard
-                    className="aspect-square col-span-1 row-span-1 cursor-pointer select-none p-2 md:p-2.5"
-                    glowColor="14, 165, 233"
+                    className="col-span-2 row-span-1 h-full cursor-pointer select-none p-3 md:p-4"
+                    glowColor="59, 130, 246"
                     spotlightRadius={150}
+                    enableStars={false}
+                    enableTilt={true}
+                    enableMagnetism={true}
+                    enableBorderGlow
                     onClick={() => setActiveTab('mcp')}
                   >
                     <div className="flex h-full flex-col">
-                      <h2 className="mb-1 flex items-center text-xs font-bold text-white md:mb-1 md:text-sm">
+                      <h2 className="mb-1.5 flex items-center text-sm font-bold text-white md:mb-2 md:text-base">
                         <Server className="mr-1.5 h-3 w-3 text-cyan-400 md:mr-2 md:h-3.5 md:w-3.5" />
                         ReactBits MCP
                       </h2>
-                      <p className="text-[9.5px] text-white/60 md:text-[10px]">
+                      <p className="text-xs text-white/70 md:text-sm">
                         Realtime integration
                       </p>
+                    </div>
+                  </BentoCard>
+                  {/* Admin Analytics Card (square) */}
+                  <BentoCard
+                    className="col-span-2 row-span-1 h-full cursor-pointer select-none p-3 md:p-4"
+                    glowColor="59, 130, 246"
+                    spotlightRadius={150}
+                    enableStars={false}
+                    enableTilt={true}
+                    enableMagnetism={true}
+                    enableBorderGlow
+                    onClick={() => navigate('/admin/analytics')}
+                  >
+                    <div className="flex h-full flex-col">
+                      <h2 className="mb-1.5 flex items-center text-sm font-bold text-white md:mb-2 md:text-base">
+                        <BarChart3 className="mr-1.5 h-3 w-3 text-teal-400 md:mr-2 md:h-3.5 md:w-3.5" />
+                        Admin Analytics
+                      </h2>
+                      <p className="text-xs text-white/70 md:text-sm">Open analytics</p>
                     </div>
                   </BentoCard>
                 </div>
@@ -195,6 +306,8 @@ const AdminDashboardMagicBento: React.FC = () => {
               glowColor="59, 130, 246"
               enableTilt={false}
               enableMagnetism={false}
+              enableStars={false}
+              enableBorderGlow
             >
               <div className="mb-6 flex items-center justify-between">
                 <h2 className="flex items-center text-2xl font-bold text-white">
@@ -203,9 +316,11 @@ const AdminDashboardMagicBento: React.FC = () => {
                 </h2>
                 <button
                   onClick={() => setActiveTab('overview')}
-                  className="text-white/70 transition-colors duration-200 hover:text-white"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/20 bg-white/5 text-white/80 transition-colors hover:text-white"
+                  aria-label="Close"
+                  title="Close"
                 >
-                  Back to Dashboard
+                  <X className="h-4 w-4" />
                 </button>
               </div>
 
@@ -259,6 +374,8 @@ const AdminDashboardMagicBento: React.FC = () => {
               glowColor="236, 72, 153"
               enableTilt={false}
               enableMagnetism={false}
+              enableStars={false}
+              enableBorderGlow
             >
               <div className="mb-6 flex items-center justify-between">
                 <h2 className="flex items-center text-2xl font-bold text-white">
@@ -267,9 +384,11 @@ const AdminDashboardMagicBento: React.FC = () => {
                 </h2>
                 <button
                   onClick={() => setActiveTab('overview')}
-                  className="text-white/70 transition-colors duration-200 hover:text-white"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/20 bg-white/5 text-white/80 transition-colors hover:text-white"
+                  aria-label="Close"
+                  title="Close"
                 >
-                  Back to Dashboard
+                  <X className="h-4 w-4" />
                 </button>
               </div>
               <NewsManagementSystem onClose={() => setActiveTab('overview')} />
@@ -285,6 +404,8 @@ const AdminDashboardMagicBento: React.FC = () => {
               glowColor="245, 158, 11"
               enableTilt={false}
               enableMagnetism={false}
+              enableStars={false}
+              enableBorderGlow
             >
               <div className="mb-6 flex items-center justify-between">
                 <h2 className="flex items-center text-2xl font-bold text-white">
@@ -293,9 +414,11 @@ const AdminDashboardMagicBento: React.FC = () => {
                 </h2>
                 <button
                   onClick={() => setActiveTab('overview')}
-                  className="text-white/70 transition-colors duration-200 hover:text-white"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/20 bg-white/5 text-white/80 transition-colors hover:text-white"
+                  aria-label="Close"
+                  title="Close"
                 >
-                  Back to Dashboard
+                  <X className="h-4 w-4" />
                 </button>
               </div>
               <PhotoApprovalSystem onClose={() => setActiveTab('overview')} />
@@ -306,7 +429,14 @@ const AdminDashboardMagicBento: React.FC = () => {
       case 'users':
         return (
           <div className="space-y-8">
-            <BentoCard className="p-8" glowColor="16, 185, 129">
+            <BentoCard
+              className="p-8"
+              glowColor="16, 185, 129"
+              enableTilt={false}
+              enableMagnetism={false}
+              enableStars={false}
+              enableBorderGlow
+            >
               <div className="mb-6 flex items-center justify-between">
                 <h2 className="flex items-center text-2xl font-bold text-white">
                   <Users className="mr-3 h-6 w-6 text-green-400" />
@@ -314,12 +444,14 @@ const AdminDashboardMagicBento: React.FC = () => {
                 </h2>
                 <button
                   onClick={() => setActiveTab('overview')}
-                  className="text-white/70 transition-colors duration-200 hover:text-white"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/20 bg-white/5 text-white/80 transition-colors hover:text-white"
+                  aria-label="Close"
+                  title="Close"
                 >
-                  Back to Dashboard
+                  <X className="h-4 w-4" />
                 </button>
               </div>
-              <UserManagementSystem onClose={() => setActiveTab('overview')} />
+              <UserManagementSystem />
             </BentoCard>
           </div>
         )
@@ -332,6 +464,8 @@ const AdminDashboardMagicBento: React.FC = () => {
               glowColor="99, 102, 241"
               enableTilt={false}
               enableMagnetism={false}
+              enableStars={false}
+              enableBorderGlow
             >
               <div className="mb-6 flex items-center justify-between">
                 <h2 className="flex items-center text-2xl font-bold text-white">
@@ -340,13 +474,21 @@ const AdminDashboardMagicBento: React.FC = () => {
                 </h2>
                 <button
                   onClick={() => setActiveTab('overview')}
-                  className="text-white/70 transition-colors duration-200 hover:text-white"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/20 bg-white/5 text-white/80 transition-colors hover:text-white"
+                  aria-label="Close"
+                  title="Close"
                 >
-                  Back to Dashboard
+                  <X className="h-4 w-4" />
                 </button>
               </div>
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <BentoCard className="p-6" enableTilt={false} enableMagnetism={false}>
+                <BentoCard
+                  className="p-6"
+                  enableTilt={false}
+                  enableMagnetism={false}
+                  enableStars={false}
+                  enableBorderGlow
+                >
                   <div className="flex h-full flex-col">
                     <h3 className="mb-2 flex items-center text-lg font-semibold text-white">
                       <Settings className="mr-2 h-5 w-5 text-indigo-400" />
@@ -355,7 +497,13 @@ const AdminDashboardMagicBento: React.FC = () => {
                     <p className="text-white/70">System settings component goes here</p>
                   </div>
                 </BentoCard>
-                <BentoCard className="p-6" enableTilt={false} enableMagnetism={false}>
+                <BentoCard
+                  className="p-6"
+                  enableTilt={false}
+                  enableMagnetism={false}
+                  enableStars={false}
+                  enableBorderGlow
+                >
                   <div className="flex h-full flex-col">
                     <h3 className="mb-2 flex items-center text-lg font-semibold text-white">
                       <BarChart3 className="mr-2 h-5 w-5 text-teal-400" />
@@ -377,6 +525,8 @@ const AdminDashboardMagicBento: React.FC = () => {
               glowColor="13, 148, 136"
               enableTilt={false}
               enableMagnetism={false}
+              enableStars={false}
+              enableBorderGlow
             >
               <div className="mb-6 flex items-center justify-between">
                 <h2 className="flex items-center text-2xl font-bold text-white">
@@ -385,9 +535,11 @@ const AdminDashboardMagicBento: React.FC = () => {
                 </h2>
                 <button
                   onClick={() => setActiveTab('overview')}
-                  className="text-white/70 transition-colors duration-200 hover:text-white"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/20 bg-white/5 text-white/80 transition-colors hover:text-white"
+                  aria-label="Close"
+                  title="Close"
                 >
-                  Back to Dashboard
+                  <X className="h-4 w-4" />
                 </button>
               </div>
               <div className="py-12 text-center">
@@ -406,6 +558,8 @@ const AdminDashboardMagicBento: React.FC = () => {
               glowColor="163, 163, 163"
               enableTilt={false}
               enableMagnetism={false}
+              enableStars={false}
+              enableBorderGlow
             >
               <div className="mb-6 flex items-center justify-between">
                 <h2 className="flex items-center text-2xl font-bold text-white">
@@ -414,9 +568,11 @@ const AdminDashboardMagicBento: React.FC = () => {
                 </h2>
                 <button
                   onClick={() => setActiveTab('overview')}
-                  className="text-white/70 transition-colors duration-200 hover:text-white"
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/20 bg-white/5 text-white/80 transition-colors hover:text-white"
+                  aria-label="Close"
+                  title="Close"
                 >
-                  Back to Dashboard
+                  <X className="h-4 w-4" />
                 </button>
               </div>
               <div className="py-12 text-center">
@@ -436,6 +592,8 @@ const AdminDashboardMagicBento: React.FC = () => {
                 glowColor="14, 165, 233"
                 enableTilt={false}
                 enableMagnetism={false}
+                enableStars={false}
+                enableBorderGlow
               >
                 <div className="mb-6 flex items-center justify-between">
                   <h2 className="flex items-center text-2xl font-bold text-white">
@@ -444,9 +602,11 @@ const AdminDashboardMagicBento: React.FC = () => {
                   </h2>
                   <button
                     onClick={() => setActiveTab('overview')}
-                    className="text-white/70 transition-colors duration-200 hover:text-white"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/20 bg-white/5 text-white/80 transition-colors hover:text-white"
+                    aria-label="Close"
+                    title="Close"
                   >
-                    Back to Dashboard
+                    <X className="h-4 w-4" />
                   </button>
                 </div>
                 <MCPDashboard onClose={() => setActiveTab('overview')} />
@@ -461,7 +621,7 @@ const AdminDashboardMagicBento: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-3 md:p-6">
+    <div className="min-h-screen overflow-hidden bg-black p-3 md:p-6">
       <div className="container mx-auto">
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">

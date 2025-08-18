@@ -4,8 +4,9 @@ import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import jsPDF from 'jspdf'
 import html2canvas from 'html2canvas'
-import { Mail, Phone, Home, User, X } from 'lucide-react'
+import { Mail, Phone, User, X } from 'lucide-react'
 import ReactBitsProfileCard from '@/components/ReactBitsProfileCard'
+import { getSignedPhotoUrl } from '@/lib/storage'
 
 type DirectoryEntry = {
   id: string
@@ -30,8 +31,9 @@ const Directory = () => {
   const [supermemoryResults, setSupermemoryResults] = useState<any[]>([])
   const [residents, setResidents] = useState<DirectoryEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [accessDenied, setAccessDenied] = useState(false)
+  
   const [expandedResident, setExpandedResident] = useState<DirectoryEntry | null>(null)
+  const [signedAvatars, setSignedAvatars] = useState<Record<string, string>>({})
 
   // Helper to get preferred contact method
   const getPreferredContact = (resident: DirectoryEntry) => {
@@ -40,9 +42,29 @@ const Directory = () => {
     return ''
   }
 
+  // Generate signed URLs for approved profile pictures
+  useEffect(() => {
+    let active = true
+    const run = async () => {
+      const updates: Record<string, string> = {}
+      await Promise.all(
+        residents.map(async (resident) => {
+          if (resident.profile_picture_url && resident.profile_picture_status === 'approved') {
+            const signed = await getSignedPhotoUrl(resident.profile_picture_url)
+            if (signed) updates[resident.id] = signed
+          }
+        }),
+      )
+      if (active) setSignedAvatars(updates)
+    }
+    run()
+    return () => {
+      active = false
+    }
+  }, [residents])
+
   useEffect(() => {
     if (profile && !profile.directory_opt_in) {
-      setAccessDenied(true)
       setIsLoading(false)
       return
     }
@@ -107,7 +129,8 @@ const Directory = () => {
   // Helper: get resident photo or default avatar
   const getResidentPhoto = (resident: DirectoryEntry) => {
     if (resident.profile_picture_url && resident.profile_picture_status === 'approved') {
-      return resident.profile_picture_url
+      const signed = signedAvatars[resident.id]
+      if (signed) return signed
     }
     // Default avatar using UI Avatars service
     return `https://ui-avatars.com/api/?name=${resident.first_name}+${resident.last_name}&background=2953A6&color=fff&size=256`
@@ -120,7 +143,6 @@ const Directory = () => {
     const imgData = canvas.toDataURL('image/png')
     const pdf = new jsPDF({ orientation: 'portrait', unit: 'pt', format: 'a4' })
     const pageWidth = pdf.internal.pageSize.getWidth()
-    const pageHeight = pdf.internal.pageSize.getHeight()
     const imgProps = pdf.getImageProperties(imgData)
     const pdfWidth = pageWidth - 40
     const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width
@@ -431,7 +453,7 @@ const Directory = () => {
         )}
       </AnimatePresence>
 
-      <style jsx>{`
+      <style>{`
         .profile-thumbnail {
           border-radius: 1rem;
           box-shadow: 0 8px 32px rgba(41, 83, 166, 0.3);

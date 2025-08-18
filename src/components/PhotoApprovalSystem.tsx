@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useEffect, useRef } from 'react'
 import {
+  X,
   Camera,
   CheckCircle,
   XCircle,
@@ -19,7 +20,7 @@ import { supabase } from '@/lib/supabase'
 import { searchPhotos, storePhotoMetadata } from '@/lib/supermemory'
 
 interface PhotoApprovalSystemProps {
-  onClose: () => void
+  onClose?: () => void
 }
 
 // Enhanced PhotoSubmission type with additional fields
@@ -481,41 +482,32 @@ const PhotoApprovalSystem: React.FC<PhotoApprovalSystemProps> = ({ onClose }) =>
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+    <div className="relative">
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
+        initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        className="flex h-[90vh] w-full max-w-7xl flex-col overflow-hidden rounded-2xl border border-white/20 bg-slate-900/95 backdrop-blur-xl"
+        exit={{ opacity: 0, scale: 0.98 }}
+        className="flex w-full flex-col"
       >
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 p-6">
-          <div className="flex items-center space-x-3">
-            <Camera className="h-6 w-6 text-orange-400" />
-            <h2 className="text-2xl font-bold text-white">Photo Approval System</h2>
-            <div className="flex space-x-1">
-              <span className="rounded-full bg-orange-500/20 px-3 py-1 text-xs text-orange-300">
-                {filteredSubmissions.length} items
-              </span>
-              <span className="rounded-full bg-yellow-500/20 px-3 py-1 text-xs text-yellow-300">
-                {stats.pending} pending
-              </span>
-            </div>
+        {/* Top Bar */}
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <span className="rounded-full bg-orange-500/20 px-3 py-1 text-xs text-orange-300">
+              {filteredSubmissions.length} items
+            </span>
+            <span className="rounded-full bg-yellow-500/20 px-3 py-1 text-xs text-yellow-300">
+              {stats.pending} pending
+            </span>
           </div>
-          <div className="flex items-center space-x-3">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={loadSubmissions}
-              className="rounded-full bg-white/10 p-2 text-white/70 transition-all hover:bg-white/20 hover:text-white"
-              title="Refresh"
-            >
-              <RefreshCw className="h-4 w-4" />
-            </motion.button>
-            <button onClick={onClose} className="text-white/70 transition-colors hover:text-white">
-              ✕
-            </button>
-          </div>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={loadSubmissions}
+            className="rounded-full bg-white/10 p-2 text-white/70 transition-all hover:bg-white/20 hover:text-white"
+            title="Refresh"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </motion.button>
         </div>
 
         {/* Controls */}
@@ -887,7 +879,11 @@ const PhotoApprovalSystem: React.FC<PhotoApprovalSystemProps> = ({ onClose }) =>
                         <span
                           className={`flex items-center space-x-1 rounded px-2 py-1 text-xs ${typeColor(viewingPhoto.submission_type)}`}
                         >
-                          <TypeIcon className="h-3 w-3" />
+                          {viewingPhoto.submission_type === 'community' ? (
+                            <ImageIcon className="h-3 w-3" />
+                          ) : (
+                            <UserCircle className="h-3 w-3" />
+                          )}
                           <span>
                             {viewingPhoto.submission_type === 'community' ? 'Community' : 'Profile'}
                           </span>
@@ -906,9 +902,11 @@ const PhotoApprovalSystem: React.FC<PhotoApprovalSystemProps> = ({ onClose }) =>
                         setViewingPhoto(null)
                         setZoomLevel(1)
                       }}
-                      className="text-white/70 hover:text-white"
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-white/20 bg-white/5 text-white/80 transition-colors hover:text-white"
+                      aria-label="Close"
+                      title="Close"
                     >
-                      ✕
+                      <X className="h-4 w-4" />
                     </button>
                   </div>
                 </div>

@@ -1,8 +1,6 @@
 import React, { useState } from 'react'
 import { supabase } from '../lib/supabase'
-import dynamic from 'next/dynamic'
-
-const RichTextEditor = dynamic(() => import('../components/RichTextEditor'), { ssr: false })
+import RichTextEditor from '../components/RichTextEditor'
 
 const NewsAdmin: React.FC = () => {
   const [title, setTitle] = useState('')
@@ -18,13 +16,29 @@ const NewsAdmin: React.FC = () => {
     setSuccess('')
     setError('')
     try {
+      const tagList = tags
+        .split(',')
+        .map((t) => t.trim())
+        .filter((t) => t.length > 0)
       const { error } = await supabase.from('news_posts').insert({
         title,
         body,
-        tags: tags.split(',').map((t) => t.trim()),
+        tags: tagList,
         is_published: true,
       })
       if (error) throw error
+      // Store in Supermemory for AI search
+      try {
+        const { storeNewsPost } = await import('../lib/supermemory')
+        await storeNewsPost({
+          title,
+          body,
+          tags: tagList,
+          createdAt: new Date().toISOString(),
+        })
+      } catch (smErr) {
+        console.warn('Supermemory news store failed:', smErr)
+      }
       setSuccess('News post published!')
       setTitle('')
       setBody('')

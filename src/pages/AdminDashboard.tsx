@@ -1,43 +1,31 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { Link } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import {
-  Calendar,
   Users,
-  FileText,
   Camera,
   MessageSquare,
   Newspaper,
   Bell,
   ChevronRight,
-  Waves,
   Sun,
   Wind,
   Settings,
   BarChart3,
   Shield,
   Mail,
-  Database,
-  Eye,
   UserPlus,
-  Send,
   Activity,
   CheckCircle,
   XCircle,
-  Upload,
   Edit3,
-  Trash2,
   Plus,
   Search,
   Filter,
 } from 'lucide-react'
-import OwnerInbox from '@/components/OwnerInbox'
-import ProfileCard from '@/components/ProfileCard'
 import PhotoApprovalSystem from '@/components/PhotoApprovalSystem'
 import UserManagementSystem from '@/components/UserManagementSystem'
 import NewsManagementSystem from '@/components/NewsManagementSystem'
 import AdminMessaging from '@/components/AdminMessaging'
-import AdminEmailSystem from '@/components/AdminEmailSystem'
 import MessagingTestComponent from '@/components/MessagingTestComponent'
 import { useAuth } from '@/contexts/AuthContext'
 import { adminService, AdminMessage, AdminStats } from '@/lib/adminService'
@@ -857,7 +845,7 @@ const AdminDashboard = () => {
             <PhotoApprovalSystem onClose={() => setActiveAdminPanel(null)} />
           )}
           {activeAdminPanel === 'user-management' && (
-            <UserManagementSystem onClose={() => setActiveAdminPanel(null)} />
+            <UserManagementSystem />
           )}
           {activeAdminPanel === 'news-admin' && (
             <NewsManagementSystem onClose={() => setActiveAdminPanel(null)} />

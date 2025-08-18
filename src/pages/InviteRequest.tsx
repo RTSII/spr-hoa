@@ -1,8 +1,18 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { ArrowRight, AlertCircle, User, Home, Mail, Calendar, CheckCircle } from 'lucide-react'
-import { storeInviteRequest, searchInviteRequests } from '../lib/supermemory'
+import { storeInviteRequest } from '../lib/supermemory'
+import { supabase } from '../lib/supabase'
+
+// reCAPTCHA site key from env
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY as string
+
+declare global {
+  interface Window {
+    grecaptcha?: any
+  }
+}
 
 const InviteRequest = () => {
   const [formData, setFormData] = useState({
@@ -16,10 +26,7 @@ const InviteRequest = () => {
   const [loading, setLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
 
-  // Supermemory.ai search state
-  const [supermemoryQuery, setSupermemoryQuery] = useState('')
-  const [supermemoryResults, setSupermemoryResults] = useState<any[]>([])
-  const [searching, setSearching] = useState(false)
+  
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target
@@ -28,6 +35,24 @@ const InviteRequest = () => {
       [name]: value,
     }))
   }
+
+  // Load reCAPTCHA script once
+  useEffect(() => {
+    if (!RECAPTCHA_SITE_KEY) return
+    const existing = document.querySelector('script[src="https://www.google.com/recaptcha/api.js"]')
+    if (existing) {
+      return
+    }
+    const script = document.createElement('script')
+    script.src = 'https://www.google.com/recaptcha/api.js'
+    script.async = true
+    script.defer = true
+    script.onload = () => {}
+    document.body.appendChild(script)
+    return () => {
+      // don't remove script to avoid reloading across navigations
+    }
+  }, [])
 
   const validateForm = () => {
     if (!formData.name.trim()) return 'Name is required'
@@ -49,9 +74,28 @@ const InviteRequest = () => {
       return
     }
 
+    // Ensure reCAPTCHA is completed
+    const tokenEl = document.getElementById('g-recaptcha-response') as HTMLTextAreaElement | null
+    const captchaToken = tokenEl?.value?.trim() || window.grecaptcha?.getResponse?.()
+    if (!captchaToken) {
+      setError('Please complete the reCAPTCHA challenge')
+      return
+    }
+
     setLoading(true)
 
     try {
+      // Server-side verify captcha token via Supabase Edge Function
+      const { data, error: verifyError } = await supabase.functions.invoke('verify-captcha', {
+        body: { token: captchaToken },
+      })
+      if (verifyError || !data?.success) {
+        console.error('Captcha verification failed:', verifyError || data)
+        setError('Captcha verification failed. Please try again.')
+        window.grecaptcha?.reset?.()
+        return
+      }
+
       // Send invite request email to rob@ursllc.com
       const emailData = {
         to: 'rob@ursllc.com',
@@ -91,6 +135,8 @@ const InviteRequest = () => {
         purchaseDate: '',
         email: '',
       })
+      // Reset captcha
+      window.grecaptcha?.reset?.()
     } catch (err: any) {
       console.error('Invite request error:', err)
       setError('Failed to submit invite request. Please try again.')
@@ -99,20 +145,7 @@ const InviteRequest = () => {
     }
   }
 
-  const handleSearch = async () => {
-    if (!supermemoryQuery.trim()) return
-
-    setSearching(true)
-    try {
-      const results = await searchInviteRequests(supermemoryQuery)
-      setSupermemoryResults(Array.isArray(results) ? results : [])
-    } catch (err) {
-      console.error('Supermemory search failed:', err)
-      setSupermemoryResults([])
-    } finally {
-      setSearching(false)
-    }
-  }
+  
 
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -217,6 +250,21 @@ const InviteRequest = () => {
                   <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-300" />
                   <p className="text-sm font-medium text-red-100">{error}</p>
                 </motion.div>
+              )}
+
+              {/* reCAPTCHA */}
+              {RECAPTCHA_SITE_KEY ? (
+                <div className="flex justify-center">
+                  <div
+                    className="g-recaptcha"
+                    data-sitekey={RECAPTCHA_SITE_KEY}
+                    data-theme="light"
+                  ></div>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-yellow-400/50 bg-yellow-500/20 p-3 text-sm text-yellow-100">
+                  reCAPTCHA not configured. Set VITE_RECAPTCHA_SITE_KEY in your environment.
+                </div>
               )}
 
               {successMessage && (
@@ -381,58 +429,7 @@ const InviteRequest = () => {
                 <p className="text-sm text-white/60">&copy; 2025 PM-Shift Pool Guy</p>
               </motion.div>
 
-              {/* Supermemory.ai Search Section */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="glass-card relative z-10 mx-auto w-full max-w-md p-8 text-center"
-              >
-                <h1 className="mb-2 text-4xl font-bold text-white">Request Invite</h1>
-                <p className="mb-8 text-white/80">
-                  Fill out your information to request access to the Sandpiper Run community portal.
-                </p>
-
-                {/* Supermemory.ai Search Section */}
-                <div className="mb-8 rounded-lg border border-white/20 bg-white/10 p-4">
-                  <h2 className="mb-3 text-xl font-semibold text-white">Search Invite Requests</h2>
-                  <p className="mb-4 text-sm text-white/70">
-                    As admin, search through all invite requests using natural language queries.
-                  </p>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={supermemoryQuery}
-                      onChange={(e) => setSupermemoryQuery(e.target.value)}
-                      placeholder="Search invites (e.g., 'requests from last week', 'unit 101 invites')"
-                      className="flex-1 rounded border border-white/20 bg-white/10 px-3 py-2 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-teal-400/50"
-                    />
-                    <button
-                      onClick={handleSearch}
-                      disabled={searching}
-                      className="rounded bg-gradient-to-r from-teal-500 to-blue-600 px-4 py-2 text-white transition-all hover:from-teal-400 hover:to-blue-500 disabled:opacity-50"
-                    >
-                      {searching ? 'Searching...' : 'Search'}
-                    </button>
-                  </div>
-
-                  {supermemoryResults.length > 0 && (
-                    <div className="mt-4 text-left">
-                      <h3 className="mb-2 font-medium text-white">Search Results:</h3>
-                      <div className="max-h-40 space-y-2 overflow-y-auto">
-                        {supermemoryResults.map((result, index) => (
-                          <div
-                            key={index}
-                            className="rounded border border-white/10 bg-white/5 p-2"
-                          >
-                            <div className="text-sm text-white">{result.content}</div>
-                            <div className="mt-1 text-xs text-white/60">Score: {result.score}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
+              
             </motion.div>
           </div>
         </motion.div>

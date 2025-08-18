@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
+import DOMPurify from 'dompurify'
 import { supabase } from '../lib/supabase'
 import { motion } from 'framer-motion'
 
@@ -10,6 +11,9 @@ const News = () => {
   const [tags, setTags] = useState<string[]>([])
   const [supermemoryQuery, setSupermemoryQuery] = useState('')
   const [supermemoryResults, setSupermemoryResults] = useState<any[]>([])
+  const [aiLoading, setAiLoading] = useState(false)
+  const [aiError, setAiError] = useState<string | null>(null)
+  const [aiSearched, setAiSearched] = useState(false)
 
   useEffect(() => {
     async function fetchPosts() {
@@ -49,10 +53,23 @@ const News = () => {
             if (!supermemoryQuery) return
             const { supermemorySearch } = await import('../lib/supermemoryClient')
             try {
-              const result = await supermemorySearch(supermemoryQuery, 'news-section')
-              setSupermemoryResults(result?.results || [])
-            } catch (err) {
+              setAiError(null)
+              setAiSearched(true)
+              setAiLoading(true)
               setSupermemoryResults([])
+              const result = await supermemorySearch(supermemoryQuery, 'news')
+              const items = Array.isArray(result)
+                ? result
+                : Array.isArray(result?.results)
+                ? result.results
+                : []
+              setSupermemoryResults(items)
+            } catch (err) {
+              const message = err instanceof Error ? err.message : 'Unknown error'
+              setAiError(message)
+              setSupermemoryResults([])
+            } finally {
+              setAiLoading(false)
             }
           }}
           role="search"
@@ -70,14 +87,39 @@ const News = () => {
             🔍 AI Search
           </button>
         </form>
-        {supermemoryResults.length > 0 && (
+        {aiLoading && (
+          <div className="mb-4 rounded border border-white/20 bg-white/10 p-3 text-white/80">
+            Searching with AI...
+          </div>
+        )}
+        {aiError && (
+          <div className="mb-4 rounded border border-red-500/50 bg-red-500/10 p-3 text-red-300">
+            AI search failed: {aiError}
+          </div>
+        )}
+        {aiSearched && !aiLoading && supermemoryResults.length === 0 && !aiError && (
+          <div className="mb-4 rounded border border-white/20 bg-white/10 p-3 text-white/70">
+            No AI results found.
+          </div>
+        )}
+        {!aiLoading && supermemoryResults.length > 0 && (
           <div className="mb-6 text-white/80">
-            <div className="mb-1 font-bold">AI Search Results:</div>
-            <ul className="ml-6 list-disc">
-              {supermemoryResults.map((res, i) => (
-                <li key={i}>{typeof res === 'string' ? res : JSON.stringify(res)}</li>
-              ))}
-            </ul>
+            <div className="mb-2 font-bold">AI Search Results</div>
+            <div className="max-h-64 space-y-2 overflow-y-auto">
+              {supermemoryResults.map((res: any, i: number) => {
+                const content = typeof res === 'string' ? res : res?.content || ''
+                const title = (content || '').split('\n')[0] || 'Result'
+                const snippet = (content || '').split('\n')[1] || ''
+                const score = typeof res?.score === 'number' ? res.score.toFixed(3) : undefined
+                return (
+                  <div key={i} className="rounded-lg border border-white/20 bg-white/10 p-3">
+                    <div className="font-medium text-white">{title}</div>
+                    {snippet && <div className="text-sm text-white/80">{snippet}</div>}
+                    {score && <div className="mt-1 text-xs text-white/60">Score: {score}</div>}
+                  </div>
+                )
+              })}
+            </div>
           </div>
         )}
         <form className="mb-8 flex flex-wrap gap-4" role="search" aria-label="Search news posts">
@@ -144,7 +186,28 @@ const News = () => {
                   </div>
                   <div
                     className="prose prose-invert max-w-none text-white/90"
-                    dangerouslySetInnerHTML={{ __html: post.body }}
+                    dangerouslySetInnerHTML={{
+                      __html: DOMPurify.sanitize(post.body || '', {
+                        ALLOWED_TAGS: [
+                          'p',
+                          'br',
+                          'strong',
+                          'em',
+                          'ul',
+                          'ol',
+                          'li',
+                          'a',
+                          'h1',
+                          'h2',
+                          'h3',
+                          'h4',
+                          'blockquote',
+                        ],
+                        ALLOWED_ATTR: ['href', 'target', 'rel'],
+                        ALLOW_ARIA_ATTR: false,
+                        ALLOW_DATA_ATTR: false,
+                      }),
+                    }}
                   />
                 </div>
               </motion.div>

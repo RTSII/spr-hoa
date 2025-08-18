@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../contexts/AuthContext'
 import { storePhotoMetadata } from '../lib/supermemory'
+import { getSignedPhotoUrl } from '../lib/storage'
 
 interface PhotoGalleryUploadProps {
   onUploadComplete: () => void
@@ -16,6 +17,8 @@ const PhotoGalleryUpload: React.FC<PhotoGalleryUploadProps> = ({ onUploadComplet
     'idle' | 'uploading' | 'pending' | 'approved' | 'rejected'
   >('idle')
   const [rejectionReason, setRejectionReason] = useState('')
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+  const [lastFilePath, setLastFilePath] = useState<string | null>(null)
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     try {
@@ -44,11 +47,6 @@ const PhotoGalleryUpload: React.FC<PhotoGalleryUploadProps> = ({ onUploadComplet
 
       if (uploadError) throw uploadError
 
-      // Get public URL
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from('photos').getPublicUrl(filePath)
-
       // Insert record into photo_submissions table
       const { data, error: insertError } = await supabase
         .from('photo_submissions')
@@ -58,9 +56,9 @@ const PhotoGalleryUpload: React.FC<PhotoGalleryUploadProps> = ({ onUploadComplet
             title,
             description,
             file_path: filePath,
-            photo_url: publicUrl,
             category: 'community',
             status: 'pending',
+            submission_type: 'gallery_photo',
           },
         ])
         .select()
@@ -69,12 +67,11 @@ const PhotoGalleryUpload: React.FC<PhotoGalleryUploadProps> = ({ onUploadComplet
 
       // Store photo metadata in Supermemory.ai
       if (data && data.length > 0) {
-        const photoId = data[0].id
         await storePhotoMetadata({
           title,
           description,
           category: 'community',
-          photoUrl: publicUrl,
+          photoUrl: filePath,
           userId: user?.id || '',
           status: 'pending',
         })
@@ -96,10 +93,15 @@ const PhotoGalleryUpload: React.FC<PhotoGalleryUploadProps> = ({ onUploadComplet
 
     const { data, error } = await supabase
       .from('photo_submissions')
-      .select('status, rejection_reason, title, submitted_at')
+      .select('status, rejection_reason, title, submitted_at, file_path')
       .eq('user_id', user.id)
       .order('submitted_at', { ascending: false })
       .limit(5)
+
+    if (error) {
+      console.error('Error fetching user submissions:', error)
+      return
+    }
 
     if (data && data.length > 0) {
       const latest = data[0]
@@ -108,12 +110,30 @@ const PhotoGalleryUpload: React.FC<PhotoGalleryUploadProps> = ({ onUploadComplet
         setUploadStatus(latest.status as (typeof allowedStatuses)[number])
       }
       setRejectionReason(latest.rejection_reason || '')
+      setLastFilePath(latest.file_path || null)
     }
   }
 
   React.useEffect(() => {
     getUserSubmissions()
   }, [user])
+
+  // Generate signed preview URL only when the latest submission is approved.
+  React.useEffect(() => {
+    let cancelled = false
+    async function signIfApproved() {
+      if (uploadStatus === 'approved' && lastFilePath) {
+        const url = await getSignedPhotoUrl(lastFilePath)
+        if (!cancelled) setPreviewUrl(url)
+      } else {
+        setPreviewUrl(null)
+      }
+    }
+    void signIfApproved()
+    return () => {
+      cancelled = true
+    }
+  }, [uploadStatus, lastFilePath])
 
   return (
     <div className="rounded-lg bg-white p-6 shadow-md">
@@ -184,8 +204,22 @@ const PhotoGalleryUpload: React.FC<PhotoGalleryUploadProps> = ({ onUploadComplet
             <p className="text-sm text-green-800">
               ✓ Your photo has been approved and added to the gallery
             </p>
+            {previewUrl && (
+              <div className="mt-2 overflow-hidden rounded-md border">
+                <img
+                  src={previewUrl}
+                  alt={title || 'Approved photo'}
+                  className="h-48 w-full object-cover"
+                />
+              </div>
+            )}
           </div>
         )}
+
+        {/* Note: When we build the Owner/Community Upload gallery page, ensure it hides any
+            newly uploaded photos that are still pending admin approval. Only display
+            images where status === 'approved', and use getSignedPhotoUrl(file_path) to
+            render from private storage securely. */}
       </div>
     </div>
   )

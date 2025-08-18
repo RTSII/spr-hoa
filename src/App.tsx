@@ -3,6 +3,8 @@ import { AuthProvider } from './contexts/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import AdminRoute from './components/AdminRoute'
 import { Suspense, lazy } from 'react'
+import AdminAnalyticsTracker from './components/AdminAnalyticsTracker'
+import AdminFab from './components/AdminFab'
 import ErrorBoundary from './components/ErrorBoundary'
 
 // Lazy-load all pages for better initial load performance
@@ -22,6 +24,7 @@ const Photos = lazy(() => import('./pages/Photos'))
 const Directory = lazy(() => import('./pages/Directory'))
 const Profile = lazy(() => import('./pages/Profile'))
 const ProfileSettings = lazy(() => import('./pages/ProfileSettings'))
+const AdminAnalytics = lazy(() => import('./pages/AdminAnalytics'))
 
 function App() {
   console.log('App rendering with full authentication and routing...')
@@ -30,6 +33,7 @@ function App() {
     <AuthProvider>
       <Router>
         <div className="min-h-screen bg-slate-900">
+          <AdminAnalyticsTracker />
           <ErrorBoundary>
             <Suspense
               fallback={
@@ -76,6 +80,14 @@ function App() {
                 element={
                   <AdminRoute>
                     <AdminDashboardWithMessaging />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="/admin/analytics"
+                element={
+                  <AdminRoute>
+                    <AdminAnalytics />
                   </AdminRoute>
                 }
               />
@@ -170,6 +182,7 @@ function App() {
               </Routes>
             </Suspense>
           </ErrorBoundary>
+          <AdminFab />
         </div>
       </Router>
     </AuthProvider>

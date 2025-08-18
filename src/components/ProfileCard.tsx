@@ -1,8 +1,9 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Mail, Phone, Home, Edit2, Check, X } from 'lucide-react'
+import { Mail, Phone, Home, Edit2, X } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import ProfilePictureUpload from './ProfilePictureUpload'
+import { getSignedPhotoUrl } from '@/lib/storage'
 
 interface ProfileCardProps {
   editable?: boolean
@@ -15,11 +16,31 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ editable = false, minimal = f
   const [currentPicture, setCurrentPicture] = useState<string | undefined>(
     profile?.profile_picture_url,
   )
+  const [signedPicture, setSignedPicture] = useState<string | undefined>(undefined)
+
+  // Generate a signed URL whenever the current picture changes
+  useEffect(() => {
+    let active = true
+    const run = async () => {
+      if (!currentPicture) {
+        setSignedPicture(undefined)
+        return
+      }
+      const signed = await getSignedPhotoUrl(currentPicture)
+      if (active) setSignedPicture(signed ?? undefined)
+    }
+    run()
+    return () => {
+      active = false
+    }
+  }, [currentPicture])
 
   if (!profile) return null
 
-  const handlePictureUploadComplete = (url: string) => {
+  const handlePictureUploadComplete = async (url: string) => {
     setCurrentPicture(url)
+    const signed = await getSignedPhotoUrl(url)
+    if (signed) setSignedPicture(signed)
   }
 
   // Default profile picture if none exists
@@ -49,7 +70,11 @@ const ProfileCard: React.FC<ProfileCardProps> = ({ editable = false, minimal = f
               <div className="group relative">
                 <div className="h-28 w-28 overflow-hidden rounded-full border-4 border-white/20">
                   <img
-                    src={currentPicture || defaultProfilePicture}
+                    src={
+                      profile.profile_picture_status === 'approved' && signedPicture
+                        ? signedPicture
+                        : defaultProfilePicture
+                    }
                     alt={`${profile.first_name} ${profile.last_name}`}
                     className="h-full w-full object-cover"
                   />

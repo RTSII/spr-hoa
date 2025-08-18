@@ -1,11 +1,11 @@
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
-import { Camera, Upload, CheckCircle, XCircle, AlertTriangle, Search } from 'lucide-react'
+import { Camera } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { supabase } from '@/lib/supabase'
 import PhotoGalleryUpload from '@/components/PhotoGalleryUpload'
 import CircularGallery from '@/components/CircularGallery'
-import { searchPhotos } from '@/lib/supermemory'
+import { getSignedPhotoUrl } from '@/lib/storage'
 
 interface Photo {
   id: string
@@ -32,8 +32,7 @@ const Photos = () => {
   const [userPhotos, setUserPhotos] = useState<Photo[]>([])
   const [loading, setLoading] = useState(true)
   const [showUploadForm, setShowUploadForm] = useState(false)
-  const [supermemoryQuery, setSupermemoryQuery] = useState('')
-  const [supermemoryResults, setSupermemoryResults] = useState<any[]>([])
+  // Supermemory search removed from this page for now to reduce complexity
 
   useEffect(() => {
     fetchApprovedPhotos()
@@ -42,16 +41,7 @@ const Photos = () => {
     }
   }, [user])
 
-  const handleSupermemorySearch = async () => {
-    try {
-      if (!supermemoryQuery) return
-      const results = await searchPhotos(supermemoryQuery)
-      setSupermemoryResults(results?.results || [])
-    } catch (error) {
-      console.error('Supermemory search error:', error)
-      setSupermemoryResults([])
-    }
-  }
+  // no-op
 
   const fetchApprovedPhotos = async () => {
     try {
@@ -63,7 +53,24 @@ const Photos = () => {
         .order('created_at', { ascending: false })
 
       if (error) throw error
-      setApprovedPhotos(data || [])
+      // Resolve signed URLs for private bucket access
+      const withSigned = await Promise.all(
+        (data || []).map(async (item: any) => {
+          const signed = await getSignedPhotoUrl(item.file_path || item.file_url || item.photo_url)
+          return {
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            // Use signed URL only; never fall back to public or stored URLs to preserve privacy
+            photo_url: signed || '',
+            category: item.category,
+            status: item.status,
+            rejection_reason: item.rejection_reason,
+            created_at: item.created_at,
+          } as Photo
+        }),
+      )
+      setApprovedPhotos(withSigned)
     } catch (error) {
       console.error('Error fetching approved photos:', error)
       setApprovedPhotos([])
@@ -86,18 +93,23 @@ const Photos = () => {
       if (error) throw error
 
       if (data) {
-        setUserPhotos(
-          data.map((item) => ({
-            id: item.id,
-            title: item.title,
-            description: item.description,
-            photo_url: item.file_url || item.photo_url,
-            category: item.category,
-            status: item.status,
-            rejection_reason: item.rejection_reason,
-            created_at: item.created_at,
-          })),
+        const withSigned = await Promise.all(
+          data.map(async (item: any) => {
+            const signed = await getSignedPhotoUrl(item.file_path || item.file_url || item.photo_url)
+            return {
+              id: item.id,
+              title: item.title,
+              description: item.description,
+              // Owner view still shows pending/rejected, but via signed URLs only
+              photo_url: signed || '',
+              category: item.category,
+              status: item.status,
+              rejection_reason: item.rejection_reason,
+              created_at: item.created_at,
+            } as Photo
+          }),
         )
+        setUserPhotos(withSigned)
       }
     } catch (error) {
       console.error('Error fetching user photos:', error)
